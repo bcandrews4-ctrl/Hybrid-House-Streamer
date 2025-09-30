@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cast</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+  <div class="house-corner" id="houseCorner">HOUSE</div>
+
+  <!-- Stacked, centered stage -->
+  <div class="cast-stage">
+    <div class="timer-stack">
+      <div class="timer" id="timer">--:--</div>
+      <div class="progress"><div class="progress__fill" id="progressFill"></div></div>
+      <div class="phase" id="phase" aria-hidden="true"></div>
+    </div>
+
+    <div class="mode-pill" id="modeProgram">MODE</div>
+
+    <div class="program-wrap">
+      <table class="table">
+        <thead></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="overlay"><div id="overlayText">Workout begins in 10</div></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/utils.js"></script>
+  <script src="/cast.js"></script>
+</body>
+</html>
