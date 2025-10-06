@@ -1,0 +1,731 @@
+{
+  "activeDay": "tuesday",
+  "days": {
+    "monday": {
+      "houses": {
+        "1": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Deadlifts",
+                "sets": "3",
+                "reps": "5"
+              },
+              {
+                "exercise": "Bench Press",
+                "sets": "3",
+                "reps": "8"
+              },
+              {
+                "exercise": "Air Squats",
+                "sets": "3",
+                "reps": "15"
+              }
+            ],
+            "fontSize": 1,
+            "label": "FOR TIME",
+            "showSets": true,
+            "title": "HOUSE 1"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 720,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "2": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Burpees",
+                "sets": "AMRAP",
+                "reps": "10"
+              },
+              {
+                "exercise": "Push-ups",
+                "sets": "AMRAP",
+                "reps": "10"
+              },
+              {
+                "exercise": "Jumping Jacks",
+                "sets": "AMRAP",
+                "reps": "20"
+              }
+            ],
+            "fontSize": 1,
+            "label": "AMRAP",
+            "showSets": true,
+            "title": "HOUSE 2"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 900,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "3": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Row",
+                "sets": "30",
+                "reps": "cal"
+              },
+              {
+                "exercise": "Rest",
+                "sets": "30",
+                "reps": "sec"
+              }
+            ],
+            "fontSize": 1,
+            "label": "INTERVALS",
+            "showSets": true,
+            "title": "HOUSE 3"
+          },
+          "timer": {
+            "mode": "interval",
+            "params": {
+              "total": 1200,
+              "blocks": 1,
+              "changeover": 60,
+              "on": 60,
+              "off": 60
+            }
+          },
+          "status": "stopped"
+        }
+      },
+      "startedAt": null,
+      "pauseAt": null,
+      "countdown": {
+        "active": false,
+        "remaining": 0
+      }
+    },
+    "tuesday": {
+      "houses": {
+        "1": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Back Squats",
+                "sets": "5",
+                "reps": "3"
+              },
+              {
+                "exercise": "Overhead Press",
+                "sets": "5",
+                "reps": "3"
+              }
+            ],
+            "fontSize": 1,
+            "label": "STRENGTH",
+            "showSets": true,
+            "title": "HOUSE 1"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 600,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "2": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Thrusters",
+                "sets": "7",
+                "reps": "min"
+              },
+              {
+                "exercise": "Rest",
+                "sets": "1",
+                "reps": "min"
+              },
+              {
+                "exercise": "Thrusters",
+                "sets": "7",
+                "reps": "min"
+              }
+            ],
+            "fontSize": 1,
+            "label": "METCON",
+            "showSets": true,
+            "title": "HOUSE 2"
+          },
+          "timer": {
+            "mode": "rounds",
+            "params": {
+              "total": 900,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "3": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Clean and Jerk",
+                "sets": "1",
+                "reps": "rep"
+              }
+            ],
+            "fontSize": 1,
+            "label": "EMOM",
+            "showSets": true,
+            "title": "HOUSE 3"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 720,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        }
+      },
+      "startedAt": null,
+      "pauseAt": null,
+      "countdown": {
+        "active": false,
+        "remaining": 0
+      }
+    },
+    "wednesday": {
+      "houses": {
+        "1": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Run",
+                "sets": "1",
+                "reps": "mile"
+              },
+              {
+                "exercise": "100 Pull-ups",
+                "sets": "1",
+                "reps": "100"
+              },
+              {
+                "exercise": "200 Push-ups",
+                "sets": "1",
+                "reps": "200"
+              },
+              {
+                "exercise": "300 Air Squats",
+                "sets": "1",
+                "reps": "300"
+              },
+              {
+                "exercise": "Run",
+                "sets": "1",
+                "reps": "mile"
+              }
+            ],
+            "fontSize": 1,
+            "label": "CHIPPER",
+            "showSets": true,
+            "title": "HOUSE 1"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 1500,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "2": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Wall Balls",
+                "sets": "5",
+                "reps": "20"
+              },
+              {
+                "exercise": "Box Jumps",
+                "sets": "5",
+                "reps": "20"
+              }
+            ],
+            "fontSize": 1,
+            "label": "FOR TIME",
+            "showSets": true,
+            "title": "HOUSE 2"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 1080,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "3": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Bike",
+                "sets": "40",
+                "reps": "cal"
+              },
+              {
+                "exercise": "Rest",
+                "sets": "20",
+                "reps": "sec"
+              }
+            ],
+            "fontSize": 1,
+            "label": "INTERVALS",
+            "showSets": true,
+            "title": "HOUSE 3"
+          },
+          "timer": {
+            "mode": "interval",
+            "params": {
+              "total": 960,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        }
+      },
+      "startedAt": null,
+      "pauseAt": null,
+      "countdown": {
+        "active": false,
+        "remaining": 0
+      }
+    },
+    "thursday": {
+      "houses": {
+        "1": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Front Squats",
+                "sets": "4",
+                "reps": "6"
+              },
+              {
+                "exercise": "Strict Pull-ups",
+                "sets": "4",
+                "reps": "8"
+              }
+            ],
+            "fontSize": 1,
+            "label": "STRENGTH",
+            "showSets": true,
+            "title": "HOUSE 1"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 720,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "2": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Double Unders",
+                "sets": "AMRAP",
+                "reps": "50"
+              },
+              {
+                "exercise": "Handstand Push-ups",
+                "sets": "AMRAP",
+                "reps": "10"
+              }
+            ],
+            "fontSize": 1,
+            "label": "AMRAP",
+            "showSets": true,
+            "title": "HOUSE 2"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 1200,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "3": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Snatch",
+                "sets": "6",
+                "reps": "min"
+              },
+              {
+                "exercise": "Rest",
+                "sets": "1",
+                "reps": "min"
+              },
+              {
+                "exercise": "Snatch",
+                "sets": "6",
+                "reps": "min"
+              }
+            ],
+            "fontSize": 1,
+            "label": "ROUNDS",
+            "showSets": true,
+            "title": "HOUSE 3"
+          },
+          "timer": {
+            "mode": "rounds",
+            "params": {
+              "total": 840,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        }
+      },
+      "startedAt": null,
+      "pauseAt": null,
+      "countdown": {
+        "active": false,
+        "remaining": 0
+      }
+    },
+    "friday": {
+      "houses": {
+        "1": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Fran",
+                "sets": "21-15-9",
+                "reps": "reps"
+              },
+              {
+                "exercise": "Thrusters",
+                "sets": "21-15-9",
+                "reps": "reps"
+              },
+              {
+                "exercise": "Pull-ups",
+                "sets": "21-15-9",
+                "reps": "reps"
+              }
+            ],
+            "fontSize": 1,
+            "label": "FOR TIME",
+            "showSets": true,
+            "title": "HOUSE 1"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 1320,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "2": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "KB Swings",
+                "sets": "5",
+                "reps": "25"
+              },
+              {
+                "exercise": "Goblet Squats",
+                "sets": "5",
+                "reps": "15"
+              }
+            ],
+            "fontSize": 1,
+            "label": "METCON",
+            "showSets": true,
+            "title": "HOUSE 2"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 960,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "3": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Assault Bike",
+                "sets": "30",
+                "reps": "cal"
+              },
+              {
+                "exercise": "Rest",
+                "sets": "30",
+                "reps": "sec"
+              }
+            ],
+            "fontSize": 1,
+            "label": "INTERVALS",
+            "showSets": true,
+            "title": "HOUSE 3"
+          },
+          "timer": {
+            "mode": "interval",
+            "params": {
+              "total": 1080,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        }
+      },
+      "startedAt": null,
+      "pauseAt": null,
+      "countdown": {
+        "active": false,
+        "remaining": 0
+      }
+    },
+    "saturday": {
+      "houses": {
+        "1": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Run",
+                "sets": "2",
+                "reps": "miles"
+              },
+              {
+                "exercise": "100 Burpees",
+                "sets": "1",
+                "reps": "100"
+              },
+              {
+                "exercise": "200 Air Squats",
+                "sets": "1",
+                "reps": "200"
+              },
+              {
+                "exercise": "Run",
+                "sets": "2",
+                "reps": "miles"
+              }
+            ],
+            "fontSize": 1,
+            "label": "CHIPPER",
+            "showSets": true,
+            "title": "HOUSE 1"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 1800,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "2": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Deadlifts",
+                "sets": "5",
+                "reps": "1"
+              },
+              {
+                "exercise": "Bench Press",
+                "sets": "5",
+                "reps": "1"
+              }
+            ],
+            "fontSize": 1,
+            "label": "STRENGTH",
+            "showSets": true,
+            "title": "HOUSE 2"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 480,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "3": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Clean",
+                "sets": "1",
+                "reps": "rep"
+              }
+            ],
+            "fontSize": 1,
+            "label": "EMOM",
+            "showSets": true,
+            "title": "HOUSE 3"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 600,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        }
+      },
+      "startedAt": null,
+      "pauseAt": null,
+      "countdown": {
+        "active": false,
+        "remaining": 0
+      }
+    },
+    "sunday": {
+      "houses": {
+        "1": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Row",
+                "sets": "AMRAP",
+                "reps": "500m"
+              },
+              {
+                "exercise": "Burpees",
+                "sets": "AMRAP",
+                "reps": "10"
+              }
+            ],
+            "fontSize": 1,
+            "label": "AMRAP",
+            "showSets": true,
+            "title": "HOUSE 1"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 900,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "2": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Wall Balls",
+                "sets": "3",
+                "reps": "30"
+              },
+              {
+                "exercise": "Box Jumps",
+                "sets": "3",
+                "reps": "30"
+              }
+            ],
+            "fontSize": 1,
+            "label": "FOR TIME",
+            "showSets": true,
+            "title": "HOUSE 2"
+          },
+          "timer": {
+            "mode": "fortime",
+            "params": {
+              "total": 720,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        },
+        "3": {
+          "workout": {
+            "exercises": [
+              {
+                "exercise": "Thrusters",
+                "sets": "4",
+                "reps": "min"
+              },
+              {
+                "exercise": "Rest",
+                "sets": "1",
+                "reps": "min"
+              },
+              {
+                "exercise": "Thrusters",
+                "sets": "4",
+                "reps": "min"
+              }
+            ],
+            "fontSize": 1,
+            "label": "ROUNDS",
+            "showSets": true,
+            "title": "HOUSE 3"
+          },
+          "timer": {
+            "mode": "rounds",
+            "params": {
+              "total": 600,
+              "blocks": 1,
+              "changeover": 60
+            }
+          },
+          "status": "stopped"
+        }
+      },
+      "startedAt": null,
+      "pauseAt": null,
+      "countdown": {
+        "active": false,
+        "remaining": 0
+      }
+    }
+  }
+}

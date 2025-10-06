@@ -1,0 +1,52 @@
+day,house,title,label,mode,total,blocks,changeover,exercise,sets,reps
+monday,1,HOUSE 1,FOR TIME,fortime,12,1,60,Deadlifts,3,5
+monday,1,HOUSE 1,FOR TIME,fortime,12,1,60,Bench Press,3,8
+monday,1,HOUSE 1,FOR TIME,fortime,12,1,60,Air Squats,3,15
+monday,2,HOUSE 2,AMRAP,fortime,15,1,60,Burpees,AMRAP,10
+monday,2,HOUSE 2,AMRAP,fortime,15,1,60,Push-ups,AMRAP,10
+monday,2,HOUSE 2,AMRAP,fortime,15,1,60,Jumping Jacks,AMRAP,20
+monday,3,HOUSE 3,INTERVALS,interval,20,1,60,Row,30,cal
+monday,3,HOUSE 3,INTERVALS,interval,20,1,60,Rest,30,sec
+tuesday,1,HOUSE 1,STRENGTH,fortime,10,1,60,Back Squats,5,3
+tuesday,1,HOUSE 1,STRENGTH,fortime,10,1,60,Overhead Press,5,3
+tuesday,2,HOUSE 2,METCON,rounds,15,1,60,Thrusters,7,min
+tuesday,2,HOUSE 2,METCON,rounds,15,1,60,Rest,1,min
+tuesday,2,HOUSE 2,METCON,rounds,15,1,60,Thrusters,7,min
+tuesday,3,HOUSE 3,EMOM,fortime,12,1,60,Clean and Jerk,1,rep
+wednesday,1,HOUSE 1,CHIPPER,fortime,25,1,60,Run,1,mile
+wednesday,1,HOUSE 1,CHIPPER,fortime,25,1,60,100 Pull-ups,1,100
+wednesday,1,HOUSE 1,CHIPPER,fortime,25,1,60,200 Push-ups,1,200
+wednesday,1,HOUSE 1,CHIPPER,fortime,25,1,60,300 Air Squats,1,300
+wednesday,1,HOUSE 1,CHIPPER,fortime,25,1,60,Run,1,mile
+wednesday,2,HOUSE 2,FOR TIME,fortime,18,1,60,Wall Balls,5,20
+wednesday,2,HOUSE 2,FOR TIME,fortime,18,1,60,Box Jumps,5,20
+wednesday,3,HOUSE 3,INTERVALS,interval,16,1,60,Bike,40,cal
+wednesday,3,HOUSE 3,INTERVALS,interval,16,1,60,Rest,20,sec
+thursday,1,HOUSE 1,STRENGTH,fortime,12,1,60,Front Squats,4,6
+thursday,1,HOUSE 1,STRENGTH,fortime,12,1,60,Strict Pull-ups,4,8
+thursday,2,HOUSE 2,AMRAP,fortime,20,1,60,Double Unders,AMRAP,50
+thursday,2,HOUSE 2,AMRAP,fortime,20,1,60,Handstand Push-ups,AMRAP,10
+thursday,3,HOUSE 3,ROUNDS,rounds,14,1,60,Snatch,6,min
+thursday,3,HOUSE 3,ROUNDS,rounds,14,1,60,Rest,1,min
+thursday,3,HOUSE 3,ROUNDS,rounds,14,1,60,Snatch,6,min
+friday,1,HOUSE 1,FOR TIME,fortime,22,1,60,Fran,21-15-9,reps
+friday,1,HOUSE 1,FOR TIME,fortime,22,1,60,Thrusters,21-15-9,reps
+friday,1,HOUSE 1,FOR TIME,fortime,22,1,60,Pull-ups,21-15-9,reps
+friday,2,HOUSE 2,METCON,fortime,16,1,60,KB Swings,5,25
+friday,2,HOUSE 2,METCON,fortime,16,1,60,Goblet Squats,5,15
+friday,3,HOUSE 3,INTERVALS,interval,18,1,60,Assault Bike,30,cal
+friday,3,HOUSE 3,INTERVALS,interval,18,1,60,Rest,30,sec
+saturday,1,HOUSE 1,CHIPPER,fortime,30,1,60,Run,2,miles
+saturday,1,HOUSE 1,CHIPPER,fortime,30,1,60,100 Burpees,1,100
+saturday,1,HOUSE 1,CHIPPER,fortime,30,1,60,200 Air Squats,1,200
+saturday,1,HOUSE 1,CHIPPER,fortime,30,1,60,Run,2,miles
+saturday,2,HOUSE 2,STRENGTH,fortime,8,1,60,Deadlifts,5,1
+saturday,2,HOUSE 2,STRENGTH,fortime,8,1,60,Bench Press,5,1
+saturday,3,HOUSE 3,EMOM,fortime,10,1,60,Clean,1,rep
+sunday,1,HOUSE 1,AMRAP,fortime,15,1,60,Row,AMRAP,500m
+sunday,1,HOUSE 1,AMRAP,fortime,15,1,60,Burpees,AMRAP,10
+sunday,2,HOUSE 2,FOR TIME,fortime,12,1,60,Wall Balls,3,30
+sunday,2,HOUSE 2,FOR TIME,fortime,12,1,60,Box Jumps,3,30
+sunday,3,HOUSE 3,ROUNDS,rounds,10,1,60,Thrusters,4,min
+sunday,3,HOUSE 3,ROUNDS,rounds,10,1,60,Rest,1,min
+sunday,3,HOUSE 3,ROUNDS,rounds,10,1,60,Thrusters,4,min
