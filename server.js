@@ -47,11 +47,16 @@ app.get('/cast/:house', (req,res) => {
 
 
 const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-const DATA_PATH = './data.json';
+const DATA_PATH = process.env.DATA_PATH || './data.json';
 const DATABASE_URL = process.env.DATABASE_URL || null;
 let dbPool = null;
 if (DATABASE_URL){
   dbPool = new Pool({ connectionString: DATABASE_URL, max: 3, ssl: { rejectUnauthorized: false } });
+  console.log('✅ PostgreSQL configured - data will persist across restarts');
+} else {
+  console.log('⚠️  WARNING: No DATABASE_URL set - using file storage only');
+  console.log('⚠️  Data will be LOST on container restart/redeploy!');
+  console.log('⚠️  See FLY_IO_SETUP.md for persistent storage options');
 }
 
 function defaultHouse(){
@@ -81,14 +86,22 @@ async function loadState(){
     try{
       await dbPool.query('create table if not exists app_state(id text primary key, payload jsonb not null)');
       const r = await dbPool.query('select payload from app_state where id=$1', ['v1']);
-      if (r.rows[0]) state = r.rows[0].payload;
-    }catch(e){ /* ignore and fall back to file */ }
+      if (r.rows[0]) {
+        state = r.rows[0].payload;
+        console.log('✅ Loaded state from PostgreSQL database');
+        return;
+      }
+    }catch(e){ 
+      console.log('⚠️  Failed to load from database:', e.message);
+    }
   }
   if (!state.days || Object.keys(state.days).length === 0){
     try{
       const raw = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
       state = raw;
+      console.log(`📁 Loaded state from file: ${DATA_PATH}`);
     }catch(e){
+      console.log('📝 No existing state found, initializing with defaults');
       for (const d of DAYS) state.days[d] = defaultDay();
     }
   }
@@ -119,12 +132,38 @@ async function loadState(){
   if (!DAYS.includes(state.activeDay)) state.activeDay = 'monday';
 }
 async function saveState(){
-  try{ fs.writeFileSync(DATA_PATH, JSON.stringify(state, null, 2)); }catch(e){ /* ignore */ }
+  let fileSaved = false;
+  let dbSaved = false;
+  
+  // Always try to save to file as backup
+  try{ 
+    fs.writeFileSync(DATA_PATH, JSON.stringify(state, null, 2)); 
+    fileSaved = true;
+  }catch(e){ 
+    console.log('⚠️  Failed to save to file:', e.message);
+  }
+  
+  // Save to database if configured
   if (dbPool){
     try{
       await dbPool.query('create table if not exists app_state(id text primary key, payload jsonb not null)');
       await dbPool.query('insert into app_state(id, payload) values($1,$2) on conflict(id) do update set payload=excluded.payload', ['v1', state]);
-    }catch(e){ /* ignore */ }
+      dbSaved = true;
+    }catch(e){ 
+      console.log('⚠️  Failed to save to database:', e.message);
+    }
+  }
+  
+  // Log once at startup what storage is being used
+  if (!saveState._logged) {
+    if (dbSaved && fileSaved) {
+      console.log('💾 Saving to both database (persistent) and file (backup)');
+    } else if (dbSaved) {
+      console.log('💾 Saving to database (persistent)');
+    } else if (fileSaved) {
+      console.log('💾 Saving to file only (⚠️  will be lost on restart!)');
+    }
+    saveState._logged = true;
   }
 }
 function dayState(day){ return state.days[day] || defaultDay(); }
