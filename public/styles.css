@@ -1,0 +1,126 @@
+:root{
+  --scale: 1;
+  --timer-scale: 1;
+  --safe-left:  max(3.5vw, env(safe-area-inset-left, 0px));
+  --safe-right: max(3.5vw, env(safe-area-inset-right, 0px));
+  --stage-top-gap: 6vh;
+  --stage-gap: 3.5vh;
+  --table-max:  min(74vw, 58rem);
+}
+
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:#fff;
+  background-color: #0b0b0c;
+  /* Global branding background (optional): place file at public/branding-bg.jpg */
+  background-image:
+    linear-gradient(rgba(0,0,0,.60), rgba(0,0,0,.60)),
+    url('/branding-bg.jpg'),
+    radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: cover, cover, 4px 4px;
+  background-position: center center, center center, 0 0;
+  background-repeat: no-repeat, no-repeat, repeat;
+  background-attachment: fixed, fixed, scroll;
+}
+
+a{ color:#9cd1ff; }
+h1,h2{ margin: 0 0 10px; }
+h1{ font-size: 24px; }
+h2{ font-size: 20px; }
+
+.app{ max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+.btn{ padding: 8px 12px; border:1px solid #fff; background: transparent; color:#fff; border-radius: 10px; cursor:pointer; }
+.btn:hover{ background: rgba(255,255,255,.08); }
+.btn.accent{ border-color:#9cd1ff; }
+.dim{ opacity: .8; }
+
+.controls{ display:flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.day-sel{ display:flex; flex-wrap:wrap; gap:8px; }
+.master{ display:flex; gap:8px; flex-wrap: wrap; }
+.import-export{ display:flex; gap:8px; flex-wrap: wrap; margin-top: 8px; }
+.links{ font-size: 14px; }
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr; /* vertical stack */
+  gap: 16px;
+}
+.card{ border:1px solid rgba(255,255,255,.2); border-radius: 16px; padding: 16px; background: rgba(255,255,255,.03); }
+.card label{ display:block; margin:8px 0; }
+.card input, .card select{
+  width: 100%;
+  padding: 8px;
+  border-radius: 10px;
+  border:1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+}
+.label-row{ display:flex; gap: 12px; flex-wrap: wrap; }
+.timer-config{ display:flex; gap: 12px; align-items:flex-start; flex-wrap:wrap; }
+.params{ display:flex; gap:12px; flex-wrap: wrap; }
+.rows{ margin-top: 8px; }
+.row-actions{ display:flex; gap:8px; margin-top:8px; }
+
+/* Cast layout */
+.house-corner{
+  position: fixed;
+  top: 3.5vw;
+  left: var(--safe-left);
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.cast-stage{
+  min-height: 100vh;
+  padding: var(--stage-top-gap) var(--safe-right) var(--stage-gap) var(--safe-left);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--stage-gap);
+}
+.timer-stack{ display:flex; flex-direction:column; align-items:center; gap: 1.2vh; }
+.timer{
+  font-size: clamp(36px, 5.25vw * var(--timer-scale), 130px);
+  line-height: 1; text-align:center; margin: 0;
+}
+.progress{
+  width: min(38vw, 640px);
+  height: 10px;
+  background: rgba(255,255,255,.2);
+  border-radius: 9999px; overflow: hidden;
+}
+.progress__fill{ height:100%; width:0; background: rgba(255,255,255,.85); }
+.phase{ display:none; }
+
+.mode-pill{
+  display:inline-block; border:2px solid #fff; border-radius:9999px;
+  padding:.35rem 1.1rem; font-weight:600; letter-spacing:1px;
+  font-size: calc(1.2rem * var(--scale));
+}
+
+.program-wrap{ width:100%; display:flex; justify-content:center; }
+.table{
+  width: var(--table-max);
+  margin: 0 auto; border-collapse: collapse; table-layout: auto;
+}
+.table th, .table td{
+  padding: .8vh .9vw;
+  border-bottom: 2px solid rgba(255,255,255,0.6);
+  font-size: calc(2.0vw * var(--scale));
+}
+.table th{ font-size: calc(1.8vw * var(--scale)); opacity: .9; }
+.table th:nth-child(2), .table td:nth-child(2){ text-align: center; }
+
+#overlay{
+  position: fixed; inset: 0; background: rgba(0,0,0,.75);
+  display:none; align-items:center; justify-content:center; text-align:center; z-index: 9999;
+}
+#overlayText{ font-size: min(10vw, 120px); font-weight:800; letter-spacing: 2px; text-transform: uppercase; }
+
+@media (max-width: 900px){
+  .timer{ font-size: calc(14vw * var(--timer-scale)); }
+  .progress{ width: min(70vw, 520px); }
+  .table th, .table td{ font-size: calc(4vw * var(--scale)); }
+}

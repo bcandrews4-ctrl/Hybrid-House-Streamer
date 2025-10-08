@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hybrid House Streamer Dashboard</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+  <div class="app">
+    <h1>Hybrid House Streamer</h1>
+    <div id="countdown" class="dim"></div>
+
+    <div class="controls">
+      <div id="daySel" class="day-sel"></div>
+      <div class="master">
+        <button id="play" class="btn">Play</button>
+        <button id="pause" class="btn">Pause</button>
+        <button id="resume" class="btn">Resume</button>
+        <button id="stop" class="btn">Stop</button>
+      </div>
+      <div class="import-export">
+        <button id="exportBtn" class="btn accent">Export Week</button>
+        <button id="importBtn" class="btn accent">Import Week</button>
+        <input type="file" id="importFile" accept=".json,.csv" style="display:none">
+        <a id="downloadTemplate" class="btn" href="/template.csv" download>Download Template</a>
+      </div>
+      <div class="links dim">
+        Cast tabs: <a href="/cast/1" target="_blank">/cast/1</a> • <a href="/cast/2" target="_blank">/cast/2</a> • <a href="/cast/3" target="_blank">/cast/3</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- House cards stacked vertically -->
+      <div class="card" id="house1">
+        <h2>HOUSE 1</h2>
+        <label>House Title (optional)<input id="h1-title" placeholder="HOUSE 1"/></label>
+
+        <div class="label-row">
+          <label>Label preset
+            <select id="h1-labelSel">
+              <option value=""></option>
+              <option>AMRAP</option>
+              <option>CHIPPER</option>
+              <option>EMOM</option>
+              <option>FOR TIME</option>
+              <option>STRENGTH</option>
+              <option>METCON</option>
+              <option>INTERVALS</option>
+              <option value="__custom">Custom…</option>
+            </select>
+          </label>
+          <label id="h1-labelWrap" style="display:none">Custom Label <input id="h1-labelCustom" placeholder="Type custom…"/></label>
+        </div>
+
+        <label>Font Size (table)<input id="h1-font" type="number" step="0.1" value="1.0"/></label>
+        <label style="margin-top:6px"><input type="checkbox" id="h1-showSets" checked/> Show "Sets" column</label>
+
+        <div class="timer-config">
+          <label>Mode
+            <select id="h1-mode">
+              <option value="fortime">For Time</option>
+              <option value="interval">Interval</option>
+              <option value="rounds">Rounds</option>
+            </select>
+          </label>
+          <div id="h1-params" class="params"></div>
+        </div>
+
+        <div class="rows" id="h1-rows"></div>
+        <div class="row-actions">
+          <button class="btn" id="h1-add">Add row</button>
+          <button class="btn" id="h1-open">Open Cast</button>
+          <button class="btn accent" id="h1-copy">Copy to Cast</button>
+        </div>
+      </div>
+
+      <div class="card" id="house2">
+        <h2>HOUSE 2</h2>
+        <label>House Title (optional)<input id="h2-title" placeholder="HOUSE 2"/></label>
+
+        <div class="label-row">
+          <label>Label preset
+            <select id="h2-labelSel">
+              <option value=""></option>
+              <option>AMRAP</option>
+              <option>CHIPPER</option>
+              <option>EMOM</option>
+              <option>FOR TIME</option>
+              <option>STRENGTH</option>
+              <option>METCON</option>
+              <option>INTERVALS</option>
+              <option value="__custom">Custom…</option>
+            </select>
+          </label>
+          <label id="h2-labelWrap" style="display:none">Custom Label <input id="h2-labelCustom" placeholder="Type custom…"/></label>
+        </div>
+
+        <label>Font Size (table)<input id="h2-font" type="number" step="0.1" value="1.0"/></label>
+        <label style="margin-top:6px"><input type="checkbox" id="h2-showSets" checked/> Show "Sets" column</label>
+
+        <div class="timer-config">
+          <label>Mode
+            <select id="h2-mode">
+              <option value="fortime">For Time</option>
+              <option value="interval">Interval</option>
+              <option value="rounds">Rounds</option>
+            </select>
+          </label>
+          <div id="h2-params" class="params"></div>
+        </div>
+
+        <div class="rows" id="h2-rows"></div>
+        <div class="row-actions">
+          <button class="btn" id="h2-add">Add row</button>
+          <button class="btn" id="h2-open">Open Cast</button>
+          <button class="btn accent" id="h2-copy">Copy to Cast</button>
+        </div>
+      </div>
+
+      <div class="card" id="house3">
+        <h2>HOUSE 3</h2>
+        <label>House Title (optional)<input id="h3-title" placeholder="HOUSE 3"/></label>
+
+        <div class="label-row">
+          <label>Label preset
+            <select id="h3-labelSel">
+              <option value=""></option>
+              <option>AMRAP</option>
+              <option>CHIPPER</option>
+              <option>EMOM</option>
+              <option>FOR TIME</option>
+              <option>STRENGTH</option>
+              <option>METCON</option>
+              <option>INTERVALS</option>
+              <option value="__custom">Custom…</option>
+            </select>
+          </label>
+          <label id="h3-labelWrap" style="display:none">Custom Label <input id="h3-labelCustom" placeholder="Type custom…"/></label>
+        </div>
+
+        <label>Font Size (table)<input id="h3-font" type="number" step="0.1" value="1.0"/></label>
+        <label style="margin-top:6px"><input type="checkbox" id="h3-showSets" checked/> Show "Sets" column</label>
+
+        <div class="timer-config">
+          <label>Mode
+            <select id="h3-mode">
+              <option value="fortime">For Time</option>
+              <option value="interval">Interval</option>
+              <option value="rounds">Rounds</option>
+            </select>
+          </label>
+          <div id="h3-params" class="params"></div>
+        </div>
+
+        <div class="rows" id="h3-rows"></div>
+        <div class="row-actions">
+          <button class="btn" id="h3-add">Add row</button>
+          <button class="btn" id="h3-open">Open Cast</button>
+          <button class="btn accent" id="h3-copy">Copy to Cast</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/utils.js"></script>
+  <script src="/dashboard.js"></script>
+</body>
+</html>
