@@ -18,7 +18,25 @@ I've configured your app to use **PostgreSQL for persistent storage**. Your code
 
 ## Quick Fix (Choose One)
 
-### Option A: Automated Setup (Easiest) ⭐
+### Option A: Use Supabase (Recommended - FREE!) ⭐
+
+Run this script and follow the prompts:
+
+```bash
+./setup-flyio-supabase.sh
+```
+
+Why Supabase?
+- ✅ **FREE tier**: 500MB database (more than enough!)
+- ✅ **Cheaper paid plans** if you need to scale
+- ✅ **Better dashboard** for managing data
+- ✅ **Automatic backups**
+
+**Time: ~5 minutes**
+
+See detailed guide: [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
+
+### Option B: Use Fly.io Postgres
 
 Run this script and follow the prompts:
 
@@ -34,10 +52,11 @@ It will:
 5. ✅ Deploy your app
 
 **Time: ~5 minutes**
+**Cost**: ~$2-5/month
 
-### Option B: Manual Setup
+### Option C: Manual Setup
 
-Follow the detailed guide: [FLY_IO_SETUP.md](./FLY_IO_SETUP.md)
+Follow the detailed guide: [FLY_IO_SETUP.md](./FLY_IO_SETUP.md) or [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
 
 **Time: ~10 minutes**
 
@@ -77,20 +96,30 @@ If you see the warning, you need to attach a database!
 
 | File | Purpose |
 |------|---------|
-| **START_HERE.md** | This file - quick start guide |
-| **FLY_IO_SETUP.md** | Detailed setup instructions |
+| **START_HERE.md** | 👈 This file - quick start guide |
+| **SUPABASE_SETUP.md** | ⭐ Supabase setup (recommended - FREE!) |
+| **SUPABASE_VS_FLYIO.md** | Comparison: Supabase vs Fly.io Postgres |
+| **FLY_IO_SETUP.md** | Fly.io Postgres setup instructions |
 | **CHANGES.md** | What changed and why |
 | **README.md** | Complete project documentation |
 | **FLYIO_COMMANDS.md** | Useful fly.io commands reference |
 | **fly.toml** | Fly.io configuration file |
-| **setup-flyio-postgres.sh** | Automated setup script |
+| **setup-flyio-supabase.sh** | ⭐ Automated Supabase setup script |
+| **setup-flyio-postgres.sh** | Automated Fly.io Postgres setup script |
 
 ## Cost
 
-- **Fly.io Free Tier**: Includes small PostgreSQL database (sufficient for this app)
-- **Paid Tier**: ~$2-5/month if you need more
+### Supabase (Recommended)
+- **Free Tier**: 500MB database, unlimited API requests - **$0/month** ✅
+- **Pro Tier**: 8GB database - $25/month (only if you need more)
 
-Your workout data is small, so free tier should work fine!
+### Fly.io Postgres
+- **No free tier**: ~$2-5/month minimum
+- **Production**: ~$15-30/month
+
+Your workout data is tiny (~50KB), so **Supabase free tier is perfect!** 🎉
+
+See [SUPABASE_VS_FLYIO.md](./SUPABASE_VS_FLYIO.md) for detailed comparison.
 
 ## Need Help?
 

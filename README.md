@@ -27,7 +27,21 @@ Visit `http://localhost:3000` for the dashboard.
 
 **⚠️ IMPORTANT**: Fly.io uses ephemeral file systems. Without a database, your data will be lost on restarts!
 
-#### Option 1: Automated Setup (Recommended)
+#### Option 1: Use Supabase (Recommended - FREE!)
+
+```bash
+./setup-flyio-supabase.sh
+```
+
+Why Supabase?
+- ✅ FREE tier with 500MB database
+- ✅ Cheaper than Fly.io Postgres
+- ✅ Better management dashboard
+- ✅ Automatic backups
+
+See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for detailed instructions.
+
+#### Option 2: Use Fly.io Postgres
 
 ```bash
 ./setup-flyio-postgres.sh
@@ -38,8 +52,6 @@ This script will:
 2. Set up a PostgreSQL database
 3. Configure environment variables
 4. Deploy your app
-
-#### Option 2: Manual Setup
 
 See [FLY_IO_SETUP.md](./FLY_IO_SETUP.md) for detailed instructions.
 

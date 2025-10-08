@@ -2,9 +2,18 @@ node_modules
 npm-debug.log
 .git
 .gitignore
-README.md
-FLY_IO_SETUP.md
 .DS_Store
-*.md
 .env
 .vscode
+*.log
+*.sh
+data.json
+# Keep only essential docs in container
+# Documentation files (not needed in production)
+CHANGES.md
+FLY_IO_SETUP.md
+SUPABASE_SETUP.md
+SUPABASE_VS_FLYIO.md
+FLYIO_COMMANDS.md
+START_HERE.md
+QUICK_REFERENCE.md
