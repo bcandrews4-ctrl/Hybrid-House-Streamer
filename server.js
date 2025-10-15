@@ -208,27 +208,35 @@ function computeHouse(day, h, now){
   if (dS.countdown.active) {
     return { phase: 'countdown', remaining: dS.countdown.remaining };
   }
-  if (dS.startedAt == null) {
+  if (dS.startedAt == null || dS.startedAt <= 0) {
     return { phase: 'idle', remaining: null };
   }
 
-  const elapsed = Math.max(0, Math.floor((nowEff - dS.startedAt) / 1000));
+  // Safety check: prevent negative or invalid elapsed times
+  const rawElapsed = Math.floor((nowEff - dS.startedAt) / 1000);
+  if (rawElapsed < 0 || !isFinite(rawElapsed)) {
+    console.warn(`Invalid elapsed time detected: ${rawElapsed}, resetting to idle`);
+    return { phase: 'idle', remaining: null };
+  }
+  const elapsed = Math.max(0, rawElapsed);
 
   if (t.mode === 'fortime'){
     const blocks     = Math.max(1, Number(t.params.blocks ?? 1));
     const changeover = Math.max(0, Number(t.params.changeover ?? 0));
-    const perBlock   = Math.max(0, Number(t.params.total ?? 0)); // seconds
+    const perBlock   = Math.max(1, Number(t.params.total ?? 600)); // seconds, minimum 1 to prevent division issues
 
     const cycleLen   = perBlock + changeover;
+    if (cycleLen <= 0) return { phase:'idle', remaining:null }; // Safety check
+    
     const blockIndex = Math.floor(elapsed / cycleLen);
     if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks };
 
     const inCycle = elapsed % cycleLen;
     if (inCycle < perBlock){
-      const remaining = perBlock - inCycle;
+      const remaining = Math.max(0, perBlock - inCycle);
       return { phase:'active', remaining, blockIndex, blocks, subphase:'work', perBlock, changeover };
     } else {
-      const r = changeover - (inCycle - perBlock);
+      const r = Math.max(0, changeover - (inCycle - perBlock));
       return { phase:'changeover', remaining:r, blockIndex, blocks, subphase:'rest', perBlock, changeover };
     }
   }
@@ -236,14 +244,16 @@ function computeHouse(day, h, now){
   if (t.mode === 'interval'){
     const blocks     = Math.max(1, Number(t.params.blocks ?? 1));
     const changeover = Math.max(0, Number(t.params.changeover ?? 0));
-    const on         = Math.max(0, Number(t.params.on ?? 60));
+    const on         = Math.max(1, Number(t.params.on ?? 60));
     const off        = Math.max(0, Number(t.params.off ?? 60));
-    const blockTotal = Math.max(0, Number(t.params.total ?? 600)); // seconds per block
-    const roundLen   = (on + off) || 1;
+    const blockTotal = Math.max(1, Number(t.params.total ?? 600)); // seconds per block
+    const roundLen   = Math.max(1, on + off);
     const rounds     = Math.max(1, Math.floor(blockTotal / roundLen));
     const blockLen   = rounds * roundLen;
 
     const cycleLen   = blockLen + changeover;
+    if (cycleLen <= 0) return { phase:'idle', remaining:null }; // Safety check
+    
     const blockIndex = Math.floor(elapsed / cycleLen);
     if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks };
 
@@ -251,22 +261,25 @@ function computeHouse(day, h, now){
     if (inCycle < blockLen){
       const inRound = inCycle % roundLen;
       if (inRound < on){
-        return { phase:'work', remaining: on - inRound, blockIndex, blocks, on, off, changeover, roundLen };
+        return { phase:'work', remaining: Math.max(0, on - inRound), blockIndex, blocks, on, off, changeover, roundLen };
       } else {
-        return { phase:'rest', remaining: roundLen - inRound, blockIndex, blocks, on, off, changeover, roundLen };
+        return { phase:'rest', remaining: Math.max(0, roundLen - inRound), blockIndex, blocks, on, off, changeover, roundLen };
       }
     } else {
-      const r = changeover - (inCycle - blockLen);
+      const r = Math.max(0, changeover - (inCycle - blockLen));
       return { phase:'changeover', remaining:r, blockIndex, blocks, on, off, changeover, roundLen };
     }
   }
 
   if (t.mode === 'emom'){
-    const total = Number(t.params.total ?? 600);
+    const total = Math.max(60, Number(t.params.total ?? 600)); // Minimum 60 seconds for EMOM
     const remainingTotal = Math.max(0, total - elapsed);
+    if (remainingTotal === 0) return { phase: 'done', remaining: 0 };
+    
     const sec = 60;
-    const mod = (sec - (elapsed % sec)) % sec || 60;
-    return { phase: remainingTotal===0 ? 'done' : 'active', remaining: remainingTotal===0 ? 0 : mod };
+    const elapsedInMinute = elapsed % sec;
+    const remaining = elapsedInMinute === 0 ? 60 : sec - elapsedInMinute;
+    return { phase: 'active', remaining: Math.max(0, Math.min(remaining, remainingTotal)) };
   }
 
   if (t.mode === 'rounds'){
@@ -277,22 +290,24 @@ function computeHouse(day, h, now){
     const blockLen   = half + breakSec + half;
 
     const cycleLen   = blockLen + changeover;
+    if (cycleLen <= 0) return { phase:'idle', remaining:null }; // Safety check
+    
     const blockIndex = Math.floor(elapsed / cycleLen);
     if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks };
 
     const inCycle = elapsed % cycleLen;
     if (inCycle < blockLen){
       if (inCycle < half){
-        return { phase:'work', subphase:'half1', remaining: half - inCycle, blockIndex, blocks, half, breakSec, changeover };
+        return { phase:'work', subphase:'half1', remaining: Math.max(0, half - inCycle), blockIndex, blocks, half, breakSec, changeover };
       }
       if (inCycle < half + breakSec){
         const inBreak = inCycle - half;
-        return { phase:'rest', subphase:'break', remaining: breakSec - inBreak, blockIndex, blocks, half, breakSec, changeover };
+        return { phase:'rest', subphase:'break', remaining: Math.max(0, breakSec - inBreak), blockIndex, blocks, half, breakSec, changeover };
       }
       const inHalf2 = inCycle - (half + breakSec);
-      return { phase:'work', subphase:'half2', remaining: half - inHalf2, blockIndex, blocks, half, breakSec, changeover };
+      return { phase:'work', subphase:'half2', remaining: Math.max(0, half - inHalf2), blockIndex, blocks, half, breakSec, changeover };
     } else {
-      const r = changeover - (inCycle - blockLen);
+      const r = Math.max(0, changeover - (inCycle - blockLen));
       return { phase:'changeover', remaining:r, blockIndex, blocks, half, breakSec, changeover };
     }
   }
@@ -380,8 +395,12 @@ io.on('connection', (socket) => {
     if (!DAYS.includes(day)) return;
     const dS = dayState(day);
     if (dS.pauseAt != null){
-      const pauseDur = Date.now() - dS.pauseAt;
-      if (dS.startedAt != null) dS.startedAt += pauseDur;
+      const now = Date.now();
+      const pauseDur = now - dS.pauseAt;
+      // Safety check: prevent invalid pause duration
+      if (pauseDur >= 0 && isFinite(pauseDur) && dS.startedAt != null) {
+        dS.startedAt += pauseDur;
+      }
       dS.pauseAt = null;
     }
     saveState();

@@ -19,7 +19,17 @@ DAYS.forEach(d => {
   const b = document.createElement('button');
   b.className = 'btn';
   b.textContent = d.toUpperCase();
-  b.addEventListener('click', ()=> socket.emit('setDay', d));
+  b.addEventListener('click', ()=> {
+    // Auto-save all houses before switching days to prevent data loss
+    [1,2,3].forEach(h => {
+      if (editing[h]) {
+        // Trigger a copy to save current edits
+        el(`h${h}-copy`).click();
+      }
+    });
+    // Small delay to ensure saves complete before switching
+    setTimeout(() => socket.emit('setDay', d), 100);
+  });
   daySel.appendChild(b);
 });
 
@@ -30,9 +40,9 @@ function addRow(h, row={}){
   div.style.display='grid'; div.style.gridTemplateColumns='2fr 1fr 1fr auto';
   div.style.gap='8px'; div.style.margin='8px 0';
   div.innerHTML = `
-    <input placeholder="Exercise" value="${row.exercise||''}"/>
-    <input placeholder="Sets" value="${row.sets||''}"/>
-    <input placeholder="Reps" value="${row.reps||''}"/>
+    <input placeholder="Exercise" value="${row.exercise||''}" autocomplete="off"/>
+    <input placeholder="Sets" value="${row.sets||''}" autocomplete="off"/>
+    <input placeholder="Reps" value="${row.reps||''}" autocomplete="off"/>
     <button class="btn">X</button>`;
   const [e,s,r] = div.querySelectorAll('input');
   [e,s,r].forEach(inp => {
