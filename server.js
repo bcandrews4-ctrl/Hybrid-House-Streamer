@@ -419,22 +419,74 @@ io.on('connection', (socket) => {
 });
 
 // Tick: handle countdown & broadcast runtime
+// Only save to database when state actually changes (not every second!)
 setInterval(() => {
   const dS = dayState(state.activeDay);
+  let needsSave = false;
+  
   if (dS.countdown.active){
     if (dS.pauseAt == null){ // only decrement if not paused
       dS.countdown.remaining = Math.max(0, dS.countdown.remaining - 1);
+      
+      // Only save when countdown ends or every 5 seconds to reduce DB writes
       if (dS.countdown.remaining === 0){
         dS.countdown.active = false;
         dS.startedAt = Date.now();
+        needsSave = true; // Important state change - must save
+      } else if (dS.countdown.remaining % 5 === 0) {
+        needsSave = true; // Checkpoint every 5 seconds
       }
-      saveState();
+      
+      if (needsSave) {
+        saveState();
+      }
     }
   }
   io.emit('state', buildRuntime(state.activeDay));
 }, 1000);
 
-app.get('/healthz', (req,res)=> res.send('ok'));
+// Health check endpoint - returns unhealthy if workouts are active
+// This prevents Fly.io from swapping machines during active classes
+app.get('/healthz', (req,res)=> {
+  const dS = dayState(state.activeDay);
+  const now = Date.now();
+  
+  // Check if any timers are actively running
+  let isActive = false;
+  
+  // Check countdown
+  if (dS.countdown && dS.countdown.active) {
+    isActive = true;
+  }
+  
+  // Check if any house has an active workout
+  for (const h of [1,2,3]) {
+    const rt = computeHouse(state.activeDay, h, now);
+    if (rt.phase !== 'idle' && rt.phase !== 'done') {
+      isActive = true;
+      break;
+    }
+  }
+  
+  // Check if there are active socket connections
+  const activeConnections = io.sockets.sockets.size;
+  
+  if (isActive) {
+    // Return 503 (Service Unavailable) to prevent machine swap
+    console.log('⚠️ Health check: Workout active, preventing machine swap');
+    return res.status(503).json({ 
+      status: 'busy', 
+      reason: 'workout_in_progress',
+      connections: activeConnections
+    });
+  }
+  
+  // All clear for deployment
+  res.status(200).json({ 
+    status: 'ok',
+    connections: activeConnections 
+  });
+});
 
 server.listen(PORT, () => {
   console.log(`Workout caster listening on http://localhost:${PORT}`);
