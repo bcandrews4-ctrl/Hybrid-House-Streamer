@@ -17,17 +17,67 @@ const BASIC_AUTH_USER = process.env.BASIC_AUTH_USER || null;
 const BASIC_AUTH_PASS = process.env.BASIC_AUTH_PASS || null;
 const DATABASE_URL = process.env.DATABASE_URL || null;
 
-// PostgreSQL client setup
+// PostgreSQL client setup with connection pooling and error handling
 let pgClient = null;
-if (DATABASE_URL) {
-  pgClient = new pg.Client({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  pgClient.connect().then(() => {
+let isConnecting = false;
+let reconnectTimer = null;
+
+async function connectDatabase() {
+  if (isConnecting) return;
+  isConnecting = true;
+  
+  try {
+    // Use connection pooling for better reliability
+    pgClient = new pg.Client({
+      connectionString: DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      // Connection timeout and keepalive settings
+      connectionTimeoutMillis: 10000,
+      query_timeout: 30000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000
+    });
+    
+    // Handle connection errors to prevent crashes
+    pgClient.on('error', (err) => {
+      console.error('❌ PostgreSQL connection error:', err.message);
+      console.log('🔄 Will attempt to reconnect in 10 seconds...');
+      
+      // Clean up current client
+      if (pgClient) {
+        pgClient.removeAllListeners();
+        pgClient.end().catch(() => {});
+        pgClient = null;
+      }
+      
+      // Schedule reconnection
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(() => {
+        isConnecting = false;
+        connectDatabase();
+      }, 10000);
+    });
+    
+    await pgClient.connect();
     console.log('✅ PostgreSQL configured - data will persist across restarts');
-    initDatabase();
-  }).catch(err => {
+    await initDatabase();
+    isConnecting = false;
+  } catch (err) {
     console.error('❌ Database connection failed:', err.message);
     pgClient = null;
-  });
+    isConnecting = false;
+    
+    // Retry connection after delay
+    console.log('🔄 Retrying connection in 10 seconds...');
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(() => {
+      connectDatabase();
+    }, 10000);
+  }
+}
+
+if (DATABASE_URL) {
+  connectDatabase();
 } else {
   console.warn('⚠️  WARNING: No DATABASE_URL set - using file storage only');
   console.warn('⚠️  Data will be LOST on container restart/redeploy!');
