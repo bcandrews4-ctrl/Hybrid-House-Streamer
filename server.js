@@ -400,7 +400,7 @@ io.on('connection', (socket) => {
 });
 
 // Tick: handle countdown & broadcast runtime
-setInterval(() => {
+const ticker = setInterval(() => {
   const dS = dayState(state.activeDay);
   if (dS.countdown.active){
     if (dS.pauseAt == null){ // only decrement if not paused
@@ -420,3 +420,34 @@ app.get('/healthz', (req,res)=> res.send('ok'));
 server.listen(PORT, () => {
   console.log(`Workout caster listening on http://localhost:${PORT}`);
 });
+
+// Graceful shutdown to persist state and close connections
+async function gracefulShutdown(signal){
+  try {
+    console.log(`[${signal}] shutting down gracefully...`);
+    clearInterval(ticker);
+    await saveState();
+  } catch (e) {
+    console.error('Error during save on shutdown:', e?.message || e);
+  }
+
+  server.close(() => {
+    // Close socket.io
+    try { io.close(); } catch(e) { /* noop */ }
+    // Close DB if present
+    const endDb = pgClient ? pgClient.end().catch(()=>{}) : Promise.resolve();
+    Promise.resolve(endDb).finally(() => {
+      console.log('Shutdown complete. Exiting.');
+      process.exit(0);
+    });
+  });
+
+  // Fallback: force-exit if something hangs
+  setTimeout(() => {
+    console.error('Forced exit after timeout');
+    process.exit(1);
+  }, 8000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
