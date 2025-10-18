@@ -53,12 +53,287 @@ function addRow(h, row={}){
 }
 [1,2,3].forEach(h => el(`h${h}-add`).addEventListener('click', ()=> { addRow(h); markEditing(h); }));
 
+/* Save button functionality - fail-proof saving */
+[1,2,3].forEach(h => {
+  const saveBtn = el(`h${h}-save`);
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      try {
+        // Show saving state
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = '💾 Saving...';
+        saveBtn.disabled = true;
+        
+        // Gather current data
+        const exercises = gatherRows(h);
+        const title = el(`h${h}-title`).value.trim();
+        const label = el(`h${h}-labelSel`).value === '__custom' ? el(`h${h}-labelCustom`).value.trim() : el(`h${h}-labelSel`).value;
+        const fontSize = parseFloat(el(`h${h}-font`).value) || 1.0;
+        const showSets = el(`h${h}-showSets`).checked;
+        const mode = el(`h${h}-mode`).value;
+        
+        // Gather timer params
+        const params = {};
+        const paramInputs = el(`h${h}-params`).querySelectorAll('input');
+        paramInputs.forEach(input => {
+          const value = parseFloat(input.value);
+          if (!isNaN(value) && value > 0) {
+            params[input.name] = value;
+          }
+        });
+        
+        // Create workout data
+        const workoutData = {
+          exercises,
+          title: title || null,
+          label,
+          fontSize,
+          showSets
+        };
+        
+        const timerData = {
+          mode,
+          params
+        };
+        
+        // Emit to server with error handling
+        socket.emit('setWorkout', { 
+          day: activeDay, 
+          house: h, 
+          workout: workoutData,
+          timer: timerData 
+        });
+        
+        // Show success state
+        saveBtn.textContent = '✅ Saved';
+        setTimeout(() => {
+          saveBtn.textContent = originalText;
+          saveBtn.disabled = false;
+        }, 2000);
+        
+        console.log(`✅ House ${h} saved successfully`);
+        
+      } catch (error) {
+        console.error(`❌ Save failed for house ${h}:`, error);
+        saveBtn.textContent = '❌ Error';
+        saveBtn.disabled = false;
+        setTimeout(() => {
+          saveBtn.textContent = '💾 Save';
+        }, 3000);
+        alert(`Save failed: ${error.message}`);
+      }
+    });
+  }
+});
+
+/* Split section functionality */
+[1,2,3].forEach(h => {
+  const splitBtn = el(`h${h}-split`);
+  if (splitBtn) {
+    splitBtn.addEventListener('click', () => {
+      try {
+        // Create split section input
+        const splitInput = document.createElement('input');
+        splitInput.type = 'text';
+        splitInput.placeholder = 'Enter section name (e.g., PART A, PART B)';
+        splitInput.className = 'split-section-input';
+        splitInput.style.cssText = `
+          width: 100%;
+          padding: 12px 16px;
+          margin: 8px 0;
+          border: 2px solid #fff;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.95);
+          color: #000;
+          font-size: 16px;
+          font-weight: 600;
+          text-align: center;
+          outline: none;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+        
+        // Create container for split section
+        const splitContainer = document.createElement('div');
+        splitContainer.className = 'split-section-container';
+        splitContainer.style.cssText = `
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 12px;
+          padding: 16px;
+          margin: 12px 0;
+          border: 2px solid #fff;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+        
+        // Create section bar
+        const sectionBar = document.createElement('div');
+        sectionBar.className = 'section-bar';
+        sectionBar.style.cssText = `
+          background: #fff;
+          color: #000;
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 18px;
+          text-align: center;
+          margin-bottom: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        `;
+        sectionBar.textContent = 'NEW SECTION';
+        
+        // Create exercises container
+        const exercisesContainer = document.createElement('div');
+        exercisesContainer.className = 'split-exercises';
+        exercisesContainer.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        `;
+        
+        // Add initial exercise row
+        const exerciseRow = document.createElement('div');
+        exerciseRow.style.cssText = `
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr auto;
+          gap: 8px;
+          align-items: center;
+        `;
+        exerciseRow.innerHTML = `
+          <input placeholder="Exercise" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
+          <input placeholder="Sets" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
+          <input placeholder="Reps" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
+          <button class="btn" style="background: #ff4444; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">X</button>
+        `;
+        
+        // Add remove functionality
+        exerciseRow.querySelector('button').addEventListener('click', () => {
+          exerciseRow.remove();
+        });
+        
+        exercisesContainer.appendChild(exerciseRow);
+        
+        // Add to container
+        splitContainer.appendChild(sectionBar);
+        splitContainer.appendChild(exercisesContainer);
+        
+        // Insert into rows container
+        const rowsContainer = el(`h${h}-rows`);
+        rowsContainer.appendChild(splitContainer);
+        
+        // Focus input and handle enter key
+        splitInput.focus();
+        splitInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const sectionName = splitInput.value.trim().toUpperCase();
+            if (sectionName) {
+              sectionBar.textContent = sectionName;
+              splitInput.remove();
+              markEditing(h);
+            }
+          }
+        });
+        
+        // Handle escape to cancel
+        splitInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            splitContainer.remove();
+          }
+        });
+        
+        // Add exercise button
+        const addExerciseBtn = document.createElement('button');
+        addExerciseBtn.textContent = '+ Add Exercise';
+        addExerciseBtn.className = 'btn';
+        addExerciseBtn.style.cssText = `
+          margin-top: 8px;
+          background: #22c55e;
+          color: #fff;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 600;
+        `;
+        
+        addExerciseBtn.addEventListener('click', () => {
+          const newRow = document.createElement('div');
+          newRow.style.cssText = `
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+          `;
+          newRow.innerHTML = `
+            <input placeholder="Exercise" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
+            <input placeholder="Sets" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
+            <input placeholder="Reps" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
+            <button class="btn" style="background: #ff4444; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">X</button>
+          `;
+          
+          newRow.querySelector('button').addEventListener('click', () => {
+            newRow.remove();
+          });
+          
+          exercisesContainer.insertBefore(newRow, addExerciseBtn);
+        });
+        
+        exercisesContainer.appendChild(addExerciseBtn);
+        
+        console.log(`✅ Split section created for house ${h}`);
+        
+      } catch (error) {
+        console.error(`❌ Split section failed for house ${h}:`, error);
+        alert(`Split section failed: ${error.message}`);
+      }
+    });
+  }
+});
+
 function gatherRows(h){
   const arr = [];
-  el(`h${h}-rows`).querySelectorAll('div').forEach(div => {
-    const [e,s,r] = div.querySelectorAll('input');
-    arr.push({ exercise:e.value, sets:s.value, reps:r.value });
+  const rowsContainer = el(`h${h}-rows`);
+  
+  // Handle regular rows
+  rowsContainer.querySelectorAll('div').forEach(div => {
+    // Skip split section containers
+    if (div.classList.contains('split-section-container')) return;
+    
+    const inputs = div.querySelectorAll('input');
+    if (inputs.length >= 3) {
+      const [e, s, r] = inputs;
+      arr.push({ 
+        exercise: e.value.trim(), 
+        sets: s.value.trim(), 
+        reps: r.value.trim() 
+      });
+    }
   });
+  
+  // Handle split sections
+  rowsContainer.querySelectorAll('.split-section-container').forEach(splitContainer => {
+    const sectionBar = splitContainer.querySelector('.section-bar');
+    const sectionName = sectionBar ? sectionBar.textContent.trim() : 'SECTION';
+    
+    // Add section header
+    arr.push({ 
+      exercise: `--- ${sectionName} ---`, 
+      sets: '', 
+      reps: '' 
+    });
+    
+    // Add exercises from this section
+    splitContainer.querySelectorAll('.split-exercises > div').forEach(exerciseDiv => {
+      const inputs = exerciseDiv.querySelectorAll('input');
+      if (inputs.length >= 3) {
+        const [e, s, r] = inputs;
+        arr.push({ 
+          exercise: e.value.trim(), 
+          sets: s.value.trim(), 
+          reps: r.value.trim() 
+        });
+      }
+    });
+  });
+  
   return arr;
 }
 
