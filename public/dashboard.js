@@ -142,9 +142,10 @@ function addRow(h, row={}){
           margin: 16px 0;
           background: #fff;
           border-radius: 8px;
-          padding: 16px;
+          padding: 10px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           align-items: center;
+          min-height: 40px;
         `;
         
         // Create title input (spans exercise column)
