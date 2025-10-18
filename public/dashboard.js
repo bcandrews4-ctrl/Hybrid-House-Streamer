@@ -126,163 +126,99 @@ function addRow(h, row={}){
   }
 });
 
-/* Split section functionality */
+/* Simple split bar functionality - clean visual separator */
 [1,2,3].forEach(h => {
   const splitBtn = el(`h${h}-split`);
   if (splitBtn) {
     splitBtn.addEventListener('click', () => {
       try {
-        // Create split section input
-        const splitInput = document.createElement('input');
-        splitInput.type = 'text';
-        splitInput.placeholder = 'Enter section name (e.g., PART A, PART B)';
-        splitInput.className = 'split-section-input';
-        splitInput.style.cssText = `
-          width: 100%;
-          padding: 12px 16px;
+        // Create simple split bar that integrates into the workout table
+        const splitBar = document.createElement('div');
+        splitBar.className = 'split-bar';
+        splitBar.style.cssText = `
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 8px;
           margin: 8px 0;
-          border: 2px solid #fff;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.95);
+          background: #fff;
+          border-radius: 8px;
+          padding: 8px 12px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        `;
+        
+        // Create title input
+        const titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.placeholder = 'PART A, PART B, etc.';
+        titleInput.value = 'PART B';
+        titleInput.style.cssText = `
+          background: transparent;
+          border: none;
           color: #000;
+          font-weight: 700;
           font-size: 16px;
-          font-weight: 600;
           text-align: center;
           outline: none;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          text-transform: uppercase;
         `;
         
-        // Create container for split section
-        const splitContainer = document.createElement('div');
-        splitContainer.className = 'split-section-container';
-        splitContainer.style.cssText = `
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 12px;
-          padding: 16px;
-          margin: 12px 0;
-          border: 2px solid #fff;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        `;
-        
-        // Create section bar
-        const sectionBar = document.createElement('div');
-        sectionBar.className = 'section-bar';
-        sectionBar.style.cssText = `
-          background: #fff;
-          color: #000;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-weight: 700;
-          font-size: 18px;
-          text-align: center;
-          margin-bottom: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        `;
-        sectionBar.textContent = 'NEW SECTION';
-        
-        // Create exercises container
-        const exercisesContainer = document.createElement('div');
-        exercisesContainer.className = 'split-exercises';
-        exercisesContainer.style.cssText = `
+        // Create remove button
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '×';
+        removeBtn.style.cssText = `
+          background: #ff4444;
+          color: #fff;
+          border: none;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: bold;
           display: flex;
-          flex-direction: column;
-          gap: 8px;
-        `;
-        
-        // Add initial exercise row
-        const exerciseRow = document.createElement('div');
-        exerciseRow.style.cssText = `
-          display: grid;
-          grid-template-columns: 2fr 1fr 1fr auto;
-          gap: 8px;
           align-items: center;
-        `;
-        exerciseRow.innerHTML = `
-          <input placeholder="Exercise" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
-          <input placeholder="Sets" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
-          <input placeholder="Reps" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
-          <button class="btn" style="background: #ff4444; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">X</button>
+          justify-content: center;
         `;
         
         // Add remove functionality
-        exerciseRow.querySelector('button').addEventListener('click', () => {
-          exerciseRow.remove();
+        removeBtn.addEventListener('click', () => {
+          splitBar.remove();
+          markEditing(h);
         });
         
-        exercisesContainer.appendChild(exerciseRow);
+        // Handle input changes
+        titleInput.addEventListener('input', () => {
+          markEditing(h);
+        });
         
-        // Add to container
-        splitContainer.appendChild(sectionBar);
-        splitContainer.appendChild(exercisesContainer);
+        // Handle enter key to finish editing
+        titleInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            titleInput.blur();
+          }
+          if (e.key === 'Escape') {
+            splitBar.remove();
+          }
+        });
+        
+        // Assemble the split bar
+        splitBar.appendChild(titleInput);
+        splitBar.appendChild(removeBtn);
         
         // Insert into rows container
         const rowsContainer = el(`h${h}-rows`);
-        rowsContainer.appendChild(splitContainer);
+        rowsContainer.appendChild(splitBar);
         
-        // Focus input and handle enter key
-        splitInput.focus();
-        splitInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            const sectionName = splitInput.value.trim().toUpperCase();
-            if (sectionName) {
-              sectionBar.textContent = sectionName;
-              splitInput.remove();
-              markEditing(h);
-            }
-          }
-        });
+        // Focus the input
+        titleInput.focus();
+        titleInput.select();
         
-        // Handle escape to cancel
-        splitInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') {
-            splitContainer.remove();
-          }
-        });
-        
-        // Add exercise button
-        const addExerciseBtn = document.createElement('button');
-        addExerciseBtn.textContent = '+ Add Exercise';
-        addExerciseBtn.className = 'btn';
-        addExerciseBtn.style.cssText = `
-          margin-top: 8px;
-          background: #22c55e;
-          color: #fff;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-weight: 600;
-        `;
-        
-        addExerciseBtn.addEventListener('click', () => {
-          const newRow = document.createElement('div');
-          newRow.style.cssText = `
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr auto;
-            gap: 8px;
-            align-items: center;
-          `;
-          newRow.innerHTML = `
-            <input placeholder="Exercise" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
-            <input placeholder="Sets" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
-            <input placeholder="Reps" autocomplete="off" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #000;">
-            <button class="btn" style="background: #ff4444; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">X</button>
-          `;
-          
-          newRow.querySelector('button').addEventListener('click', () => {
-            newRow.remove();
-          });
-          
-          exercisesContainer.insertBefore(newRow, addExerciseBtn);
-        });
-        
-        exercisesContainer.appendChild(addExerciseBtn);
-        
-        console.log(`✅ Split section created for house ${h}`);
+        markEditing(h);
+        console.log(`✅ Split bar created for house ${h}`);
         
       } catch (error) {
-        console.error(`❌ Split section failed for house ${h}:`, error);
-        alert(`Split section failed: ${error.message}`);
+        console.error(`❌ Split bar failed for house ${h}:`, error);
+        alert(`Split bar failed: ${error.message}`);
       }
     });
   }
@@ -292,37 +228,22 @@ function gatherRows(h){
   const arr = [];
   const rowsContainer = el(`h${h}-rows`);
   
-  // Handle regular rows
+  // Process all rows in order
   rowsContainer.querySelectorAll('div').forEach(div => {
-    // Skip split section containers
-    if (div.classList.contains('split-section-container')) return;
-    
-    const inputs = div.querySelectorAll('input');
-    if (inputs.length >= 3) {
-      const [e, s, r] = inputs;
-      arr.push({ 
-        exercise: e.value.trim(), 
-        sets: s.value.trim(), 
-        reps: r.value.trim() 
-      });
+    // Handle split bars
+    if (div.classList.contains('split-bar')) {
+      const titleInput = div.querySelector('input');
+      if (titleInput && titleInput.value.trim()) {
+        arr.push({ 
+          exercise: `--- ${titleInput.value.trim().toUpperCase()} ---`, 
+          sets: '', 
+          reps: '' 
+        });
+      }
     }
-  });
-  
-  // Handle split sections
-  rowsContainer.querySelectorAll('.split-section-container').forEach(splitContainer => {
-    const sectionBar = splitContainer.querySelector('.section-bar');
-    const sectionName = sectionBar ? sectionBar.textContent.trim() : 'SECTION';
-    
-    // Add section header
-    arr.push({ 
-      exercise: `--- ${sectionName} ---`, 
-      sets: '', 
-      reps: '' 
-    });
-    
-    // Add exercises from this section
-    splitContainer.querySelectorAll('.split-exercises > div').forEach(exerciseDiv => {
-      const inputs = exerciseDiv.querySelectorAll('input');
+    // Handle regular exercise rows
+    else {
+      const inputs = div.querySelectorAll('input');
       if (inputs.length >= 3) {
         const [e, s, r] = inputs;
         arr.push({ 
@@ -331,7 +252,7 @@ function gatherRows(h){
           reps: r.value.trim() 
         });
       }
-    });
+    }
   });
   
   return arr;
