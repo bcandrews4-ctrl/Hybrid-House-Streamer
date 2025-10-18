@@ -126,31 +126,32 @@ function addRow(h, row={}){
   }
 });
 
-/* Simple split bar functionality - clean visual separator */
+/* Bar Split functionality - clean visual separator for dashboard and cast */
 [1,2,3].forEach(h => {
   const splitBtn = el(`h${h}-split`);
   if (splitBtn) {
     splitBtn.addEventListener('click', () => {
       try {
-        // Create simple split bar that integrates into the workout table
-        const splitBar = document.createElement('div');
-        splitBar.className = 'split-bar';
-        splitBar.style.cssText = `
+        // Create bar split that works on both dashboard and cast
+        const barSplit = document.createElement('div');
+        barSplit.className = 'bar-split';
+        barSplit.style.cssText = `
           display: grid;
-          grid-template-columns: 1fr auto;
+          grid-template-columns: 2fr 1fr 1fr auto;
           gap: 8px;
           margin: 8px 0;
           background: #fff;
           border-radius: 8px;
-          padding: 8px 12px;
+          padding: 12px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          align-items: center;
         `;
         
-        // Create title input
+        // Create title input (spans exercise column)
         const titleInput = document.createElement('input');
         titleInput.type = 'text';
         titleInput.placeholder = 'PART A, PART B, etc.';
-        titleInput.value = 'PART B';
+        titleInput.value = 'NEW SECTION';
         titleInput.style.cssText = `
           background: transparent;
           border: none;
@@ -160,6 +161,20 @@ function addRow(h, row={}){
           text-align: center;
           outline: none;
           text-transform: uppercase;
+          grid-column: 1;
+        `;
+        
+        // Create empty divs for sets and reps columns
+        const emptySets = document.createElement('div');
+        emptySets.style.cssText = `
+          grid-column: 2;
+          height: 1px;
+        `;
+        
+        const emptyReps = document.createElement('div');
+        emptyReps.style.cssText = `
+          grid-column: 3;
+          height: 1px;
         `;
         
         // Create remove button
@@ -178,11 +193,12 @@ function addRow(h, row={}){
           display: flex;
           align-items: center;
           justify-content: center;
+          grid-column: 4;
         `;
         
         // Add remove functionality
         removeBtn.addEventListener('click', () => {
-          splitBar.remove();
+          barSplit.remove();
           markEditing(h);
         });
         
@@ -197,28 +213,30 @@ function addRow(h, row={}){
             titleInput.blur();
           }
           if (e.key === 'Escape') {
-            splitBar.remove();
+            barSplit.remove();
           }
         });
         
-        // Assemble the split bar
-        splitBar.appendChild(titleInput);
-        splitBar.appendChild(removeBtn);
+        // Assemble the bar split
+        barSplit.appendChild(titleInput);
+        barSplit.appendChild(emptySets);
+        barSplit.appendChild(emptyReps);
+        barSplit.appendChild(removeBtn);
         
         // Insert into rows container
         const rowsContainer = el(`h${h}-rows`);
-        rowsContainer.appendChild(splitBar);
+        rowsContainer.appendChild(barSplit);
         
         // Focus the input
         titleInput.focus();
         titleInput.select();
         
         markEditing(h);
-        console.log(`✅ Split bar created for house ${h}`);
+        console.log(`✅ Bar split created for house ${h}`);
         
       } catch (error) {
-        console.error(`❌ Split bar failed for house ${h}:`, error);
-        alert(`Split bar failed: ${error.message}`);
+        console.error(`❌ Bar split failed for house ${h}:`, error);
+        alert(`Bar split failed: ${error.message}`);
       }
     });
   }
@@ -230,8 +248,8 @@ function gatherRows(h){
   
   // Process all rows in order
   rowsContainer.querySelectorAll('div').forEach(div => {
-    // Handle split bars
-    if (div.classList.contains('split-bar')) {
+    // Handle bar splits
+    if (div.classList.contains('bar-split')) {
       const titleInput = div.querySelector('input');
       if (titleInput && titleInput.value.trim()) {
         arr.push({ 

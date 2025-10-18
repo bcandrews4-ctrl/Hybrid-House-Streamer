@@ -135,15 +135,42 @@ socket.on('state', (st) => {
   tbody.innerHTML = '';
   (h.workout.exercises || []).forEach(row => {
     const tr = document.createElement('tr');
-    if (showSets){
-      tr.innerHTML = `
-        <td style="text-align:left">${row.exercise || '—'}</td>
-        <td style="text-align:center">${row.sets || '—'}</td>
-        <td style="text-align:right">${row.reps || '—'}</td>`;
+    
+    // Check if this is a bar split (starts with "--- ")
+    const isBarSplit = row.exercise && row.exercise.startsWith('--- ') && row.exercise.endsWith(' ---');
+    
+    if (isBarSplit) {
+      // Create special bar split row
+      const sectionName = row.exercise.replace(/^--- | ---$/g, '');
+      if (showSets) {
+        tr.innerHTML = `
+          <td colspan="3" style="background: #fff; color: #000; text-align: center; font-weight: 700; font-size: 18px; padding: 12px; border-radius: 8px; margin: 8px 0;">
+            ${sectionName}
+          </td>`;
+      } else {
+        tr.innerHTML = `
+          <td colspan="2" style="background: #fff; color: #000; text-align: center; font-weight: 700; font-size: 18px; padding: 12px; border-radius: 8px; margin: 8px 0;">
+            ${sectionName}
+          </td>`;
+      }
+      tr.style.cssText = `
+        background: #fff;
+        border-radius: 8px;
+        margin: 8px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      `;
     } else {
-      tr.innerHTML = `
-        <td style="text-align:left">${row.exercise || '—'}</td>
-        <td style="text-align:right">${row.reps || '—'}</td>`;
+      // Regular exercise row
+      if (showSets){
+        tr.innerHTML = `
+          <td style="text-align:left">${row.exercise || '—'}</td>
+          <td style="text-align:center">${row.sets || '—'}</td>
+          <td style="text-align:right">${row.reps || '—'}</td>`;
+      } else {
+        tr.innerHTML = `
+          <td style="text-align:left">${row.exercise || '—'}</td>
+          <td style="text-align:right">${row.reps || '—'}</td>`;
+      }
     }
     tbody.appendChild(tr);
   });
