@@ -140,24 +140,25 @@ socket.on('state', (st) => {
     const isBarSplit = row.exercise && row.exercise.startsWith('--- ') && row.exercise.endsWith(' ---');
     
     if (isBarSplit) {
-      // Create special bar split row
+      // Create special bar split row with increased padding and no table borders
       const sectionName = row.exercise.replace(/^--- | ---$/g, '');
       if (showSets) {
         tr.innerHTML = `
-          <td colspan="3" style="background: #fff; color: #000; text-align: center; font-weight: 700; font-size: 18px; padding: 12px; border-radius: 8px; margin: 8px 0;">
+          <td colspan="3" style="background: #fff; color: #000; text-align: center; font-weight: 700; font-size: 18px; padding: 16px; border-radius: 8px; border: none;">
             ${sectionName}
           </td>`;
       } else {
         tr.innerHTML = `
-          <td colspan="2" style="background: #fff; color: #000; text-align: center; font-weight: 700; font-size: 18px; padding: 12px; border-radius: 8px; margin: 8px 0;">
+          <td colspan="2" style="background: #fff; color: #000; text-align: center; font-weight: 700; font-size: 18px; padding: 16px; border-radius: 8px; border: none;">
             ${sectionName}
           </td>`;
       }
       tr.style.cssText = `
         background: #fff;
         border-radius: 8px;
-        margin: 8px 0;
+        margin: 16px 0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: none !important;
       `;
     } else {
       // Regular exercise row

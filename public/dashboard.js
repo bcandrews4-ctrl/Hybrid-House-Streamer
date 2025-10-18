@@ -139,10 +139,10 @@ function addRow(h, row={}){
           display: grid;
           grid-template-columns: 2fr 1fr 1fr auto;
           gap: 8px;
-          margin: 8px 0;
+          margin: 16px 0;
           background: #fff;
           border-radius: 8px;
-          padding: 12px;
+          padding: 16px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           align-items: center;
         `;
