@@ -64,44 +64,38 @@ function addRow(h, row={}){
         saveBtn.textContent = '💾 Saving...';
         saveBtn.disabled = true;
         
-        // Gather current data
+        // Gather current data (same as Copy to Cast)
         const exercises = gatherRows(h);
-        const title = el(`h${h}-title`).value.trim();
-        const label = el(`h${h}-labelSel`).value === '__custom' ? el(`h${h}-labelCustom`).value.trim() : el(`h${h}-labelSel`).value;
-        const fontSize = parseFloat(el(`h${h}-font`).value) || 1.0;
-        const showSets = el(`h${h}-showSets`).checked;
-        const mode = el(`h${h}-mode`).value;
+        const fontSize = Number(el(`h${h}-font`).value || 1);
+        const labSel = el(`h${h}-labelSel`).value;
+        let label = '';
+        if (labSel === '__custom') label = el(`h${h}-labelCustom`).value || '';
+        else label = labSel;
         
-        // Gather timer params
-        const params = {};
-        const paramInputs = el(`h${h}-params`).querySelectorAll('input');
-        paramInputs.forEach(input => {
-          const value = parseFloat(input.value);
-          if (!isNaN(value) && value > 0) {
-            params[input.name] = value;
-          }
+        const showSets = el(`h${h}-showSets`).checked;
+        const title = (el(`h${h}-title`).value || '').trim();
+        
+        // Save workout data
+        console.log(`Saving workout for house ${h}:`, { day: activeDay, house: h, workout: { exercises, fontSize, label, showSets, title } });
+        socket.emit('updateWorkout', {
+          day: activeDay, 
+          house: h,
+          workout: { exercises, fontSize, label, showSets, title }
         });
         
-        // Create workout data
-        const workoutData = {
-          exercises,
-          title: title || null,
-          label,
-          fontSize,
-          showSets
-        };
+        // Save timer data
+        const mode = el(`h${h}-mode`).value;
+        const params = {};
+        el(`h${h}-params`).querySelectorAll('input').forEach(inp => {
+          const val = Number(inp.value);
+          if (!isNaN(val) && val > 0) params[inp.name] = val;
+        });
         
-        const timerData = {
-          mode,
-          params
-        };
-        
-        // Emit to server with error handling
-        socket.emit('setWorkout', { 
-          day: activeDay, 
-          house: h, 
-          workout: workoutData,
-          timer: timerData 
+        console.log(`Saving timer for house ${h}:`, { day: activeDay, house: h, timer: { mode, params } });
+        socket.emit('updateTimer', {
+          day: activeDay,
+          house: h,
+          timer: { mode, params }
         });
         
         // Show success state
@@ -111,7 +105,7 @@ function addRow(h, row={}){
           saveBtn.disabled = false;
         }, 2000);
         
-        console.log(`✅ House ${h} saved successfully`);
+        console.log(`✅ House ${h} saved successfully to database`);
         
       } catch (error) {
         console.error(`❌ Save failed for house ${h}:`, error);

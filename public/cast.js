@@ -133,14 +133,24 @@ socket.on('state', (st) => {
   // Render table rows
   const tbody = el('tbody');
   tbody.innerHTML = '';
-  (h.workout.exercises || []).forEach(row => {
+  (h.workout.exercises || []).forEach((row, index) => {
     const tr = document.createElement('tr');
     
     // Check if this is a bar split (starts with "--- ")
     const isBarSplit = row.exercise && row.exercise.startsWith('--- ') && row.exercise.endsWith(' ---');
     
     if (isBarSplit) {
-      // Create special bar split row with proper padding and reduced thickness
+      // Add spacer row before bar split
+      const spacerBefore = document.createElement('tr');
+      spacerBefore.style.cssText = 'height: 16px; border: none;';
+      if (showSets) {
+        spacerBefore.innerHTML = '<td colspan="3" style="border: none; padding: 0;"></td>';
+      } else {
+        spacerBefore.innerHTML = '<td colspan="2" style="border: none; padding: 0;"></td>';
+      }
+      tbody.appendChild(spacerBefore);
+      
+      // Create bar split row
       const sectionName = row.exercise.replace(/^--- | ---$/g, '');
       if (showSets) {
         tr.innerHTML = `
@@ -154,14 +164,20 @@ socket.on('state', (st) => {
           </td>`;
       }
       tr.style.cssText = `
-        background: #fff;
-        border-radius: 8px;
-        margin: 16px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: transparent;
         border: none !important;
-        height: auto;
-        min-height: 40px;
       `;
+      tbody.appendChild(tr);
+      
+      // Add spacer row after bar split
+      const spacerAfter = document.createElement('tr');
+      spacerAfter.style.cssText = 'height: 16px; border: none;';
+      if (showSets) {
+        spacerAfter.innerHTML = '<td colspan="3" style="border: none; padding: 0;"></td>';
+      } else {
+        spacerAfter.innerHTML = '<td colspan="2" style="border: none; padding: 0;"></td>';
+      }
+      tbody.appendChild(spacerAfter);
     } else {
       // Regular exercise row
       if (showSets){
@@ -174,7 +190,7 @@ socket.on('state', (st) => {
           <td style="text-align:left">${row.exercise || '—'}</td>
           <td style="text-align:right">${row.reps || '—'}</td>`;
       }
+      tbody.appendChild(tr);
     }
-    tbody.appendChild(tr);
   });
 });
