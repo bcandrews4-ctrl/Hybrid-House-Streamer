@@ -63,6 +63,51 @@ app.get('/cast/:house', (req,res) => {
   res.sendFile(path.resolve('public', 'cast.html'));
 });
 
+// Export current state as JSON
+app.get('/api/export', async (req, res) => {
+  try {
+    // Ensure latest computed defaults are present before exporting
+    await loadState();
+    res.json(state);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to export', message: err?.message || String(err) });
+  }
+});
+
+// Import state from JSON
+app.post('/api/import', async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || typeof data !== 'object' || !data.days) {
+      return res.status(400).json({ error: 'Invalid payload' });
+    }
+
+    // Replace in-memory state, then normalize to ensure all defaults/fields present
+    state = { activeDay: data.activeDay || 'monday', days: data.days || {} };
+    await loadState(); // will backfill defaults and new fields
+    await saveState();
+    io.emit('state', buildRuntime(state.activeDay));
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to import', message: err?.message || String(err) });
+  }
+});
+
+// Serve a simple CSV template dynamically
+app.get('/template.csv', (req, res) => {
+  const headers = [
+    'day', 'house', 'title', 'label', 'exercise', 'sets', 'reps',
+    'mode', 'total', 'blocks', 'changeover', 'on', 'off', 'half', 'break'
+  ];
+  const sample = [
+    ['monday','1','HOUSE 1','','Back Squat','5','5','fortime','10','1','60','','','',''],
+    ['monday','2','HOUSE 2','EMOM','Push-ups','','10','emom','','','','','','',''],
+  ];
+  const rows = [headers.join(','), ...sample.map(r => r.map(x => typeof x === 'string' ? `"${x}"` : String(x||'')).join(','))];
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.send(rows.join('\n'));
+});
+
 
 const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
 const DATA_PATH = process.env.DATA_PATH || './data.json';
