@@ -275,25 +275,38 @@ function computeHouse(day, h, now){
     const half       = Math.max(1, Number(t.params.half ?? 420));
     const breakSec   = Math.max(0, Number(t.params.break ?? 60));
     const blockLen   = half + breakSec + half;
+    const totalRounds = 2;
+
+    const calcRound = (inCycle) => {
+      if (inCycle < half) return 1;
+      if (breakSec > 0 && inCycle < half + breakSec) return 1;
+      if (inCycle < blockLen) return 2;
+      return 1;
+    };
 
     const cycleLen   = blockLen + changeover;
     const blockIndex = Math.floor(elapsed / cycleLen);
-    if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks };
+    if (blockIndex >= blocks) {
+      return { phase:'done', remaining:0, blockIndex: blocks, blocks, half, breakSec, changeover, round: totalRounds, rounds: totalRounds };
+    }
 
     const inCycle = elapsed % cycleLen;
     if (inCycle < blockLen){
       if (inCycle < half){
-        return { phase:'work', subphase:'half1', remaining: half - inCycle, blockIndex, blocks, half, breakSec, changeover };
+        const round = calcRound(inCycle);
+        return { phase:'work', subphase:'half1', remaining: half - inCycle, blockIndex, blocks, half, breakSec, changeover, round, rounds: totalRounds };
       }
       if (inCycle < half + breakSec){
         const inBreak = inCycle - half;
-        return { phase:'rest', subphase:'break', remaining: breakSec - inBreak, blockIndex, blocks, half, breakSec, changeover };
+        const round = calcRound(inCycle);
+        return { phase:'rest', subphase:'break', remaining: breakSec - inBreak, blockIndex, blocks, half, breakSec, changeover, round, rounds: totalRounds };
       }
       const inHalf2 = inCycle - (half + breakSec);
-      return { phase:'work', subphase:'half2', remaining: half - inHalf2, blockIndex, blocks, half, breakSec, changeover };
+      const round = calcRound(inCycle);
+      return { phase:'work', subphase:'half2', remaining: half - inHalf2, blockIndex, blocks, half, breakSec, changeover, round, rounds: totalRounds };
     } else {
       const r = changeover - (inCycle - blockLen);
-      return { phase:'changeover', remaining:r, blockIndex, blocks, half, breakSec, changeover };
+      return { phase:'changeover', remaining:r, blockIndex, blocks, half, breakSec, changeover, round: 1, rounds: totalRounds };
     }
   }
 
