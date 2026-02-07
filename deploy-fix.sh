@@ -48,5 +48,3 @@ echo "🔗 Test your app: https://hybrid-house-streamer.fly.dev"
 echo ""
 echo "📝 For more details, see DEPLOY_SINGLE_MACHINE.md"
 
-
-

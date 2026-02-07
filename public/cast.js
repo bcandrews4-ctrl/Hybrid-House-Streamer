@@ -16,6 +16,50 @@ const H = getHouse();
 const thead = document.querySelector('thead');
 el('houseCorner').textContent = `HOUSE ${H}`;
 
+function getOrientation(){
+  const usp = new URLSearchParams(location.search);
+  const query = (usp.get('orientation') || '').toLowerCase();
+  const stored = (localStorage.getItem(`castOrientation:${H}`) || '').toLowerCase();
+  const val = query || stored || 'landscape';
+  return val === 'portrait' ? 'portrait' : 'landscape';
+}
+function applyOrientation(orientation){
+  document.body.classList.toggle('orientation-portrait', orientation === 'portrait');
+  document.body.classList.toggle('orientation-landscape', orientation !== 'portrait');
+  localStorage.setItem(`castOrientation:${H}`, orientation);
+}
+function updateOrientationButtons(orientation){
+  const btnLandscape = el('orientationLandscape');
+  const btnPortrait = el('orientationPortrait');
+  if (!btnLandscape || !btnPortrait) return;
+  btnLandscape.classList.toggle('active', orientation === 'landscape');
+  btnPortrait.classList.toggle('active', orientation === 'portrait');
+}
+function setupOrientationToggle(){
+  const usp = new URLSearchParams(location.search);
+  const showControls = usp.get('controls') === '1';
+  const toggleWrap = el('castOrientationToggle');
+  if (toggleWrap) toggleWrap.style.display = showControls ? 'flex' : 'none';
+  const btnLandscape = el('orientationLandscape');
+  const btnPortrait = el('orientationPortrait');
+  if (btnLandscape) {
+    btnLandscape.addEventListener('click', () => {
+      applyOrientation('landscape');
+      updateOrientationButtons('landscape');
+    });
+  }
+  if (btnPortrait) {
+    btnPortrait.addEventListener('click', () => {
+      applyOrientation('portrait');
+      updateOrientationButtons('portrait');
+    });
+  }
+}
+const initialOrientation = getOrientation();
+applyOrientation(initialOrientation);
+updateOrientationButtons(initialOrientation);
+setupOrientationToggle();
+
 function applyScale(scale){
   // Only scale table text; do NOT touch timer size
   document.documentElement.style.setProperty('--scale', String(scale || 1));
@@ -76,16 +120,19 @@ socket.on('state', (st) => {
   }
 
   const rt = h.runtime;
+  const timerEl = el('timer');
   // Timer text
   if (rt.phase === 'idle'){
-    el('timer').textContent = '--:--';
+    timerEl.textContent = '--:--';
   } else if (rt.phase === 'countdown'){
-    el('timer').textContent = fmt(rt.remaining);
+    timerEl.textContent = fmt(rt.remaining);
   } else if (['active','work','rest','changeover'].includes(rt.phase)){
-    el('timer').textContent = fmt(rt.remaining);
+    timerEl.textContent = fmt(rt.remaining);
   } else if (rt.phase === 'done'){
-    el('timer').textContent = '00:00';
+    timerEl.textContent = '00:00';
   }
+  const isRest = (rt.phase === 'rest' || rt.phase === 'changeover');
+  timerEl.classList.toggle('timer-rest', isRest);
 
   // Progress fill
   const fill = el('progressFill');

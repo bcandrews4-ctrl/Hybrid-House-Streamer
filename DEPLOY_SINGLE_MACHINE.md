@@ -131,5 +131,3 @@ Then deploy: `fly deploy`
 ✅ Reliable during workouts
 ✅ ~$5-10/month cost increase for 100% reliability
 
-
-
