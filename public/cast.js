@@ -38,6 +38,24 @@ socket.on('state', (st) => {
   const title = (h.workout.title && h.workout.title.trim()) ? h.workout.title.trim() : fallback;
   el('houseCorner').textContent = title.toUpperCase();
 
+  // Update rounds counter display
+  const roundsCounter = el('roundsCounter');
+  const roundsNumber = el('roundsNumber');
+  const roundsTotal = el('roundsTotal');
+  
+  // Get rounds info from runtime
+  const roundsInfo = h.runtime && h.runtime.roundsInfo;
+  
+  // Only show rounds counter if enabled AND roundsInfo exists (not during changeover)
+  if (h.roundsCounter && h.roundsCounter.enabled && roundsInfo) {
+    roundsCounter.style.display = 'block';
+    roundsNumber.textContent = roundsInfo.currentRound;
+    roundsTotal.textContent = roundsInfo.totalRounds;
+  } else {
+    // Hide during changeover or when disabled
+    roundsCounter.style.display = 'none';
+  }
+
   applyScale(h.workout.fontSize || 1);
 
   const label = (h.workout.label && h.workout.label.trim()) ? h.workout.label.trim() : autoLabelFromMode(h.timer.mode);
@@ -77,9 +95,16 @@ socket.on('state', (st) => {
   if (t.mode === 'fortime'){
     const perBlock   = Number(rt.perBlock || t.params.total || 0);
     const changeover = Number(rt.changeover || t.params.changeover || 0);
+    const countUp    = rt.countUp === true || t.params?.countUp === true;
     if (rt.phase === 'active' && perBlock > 0) {
       const remaining = Number(rt.remaining || 0);
-      pct = clamp01((perBlock - remaining) / perBlock);
+      if (countUp) {
+        // When counting up, remaining contains elapsed time
+        pct = clamp01(remaining / perBlock);
+      } else {
+        // When counting down, calculate remaining time
+        pct = clamp01((perBlock - remaining) / perBlock);
+      }
     } else if (rt.phase === 'changeover' && changeover > 0){
       const remaining = Number(rt.remaining || 0);
       pct = clamp01((changeover - remaining) / changeover);
@@ -154,12 +179,12 @@ socket.on('state', (st) => {
       const sectionName = row.exercise.replace(/^--- | ---$/g, '');
       if (showSets) {
         tr.innerHTML = `
-          <td colspan="3" style="background: #fff; color: #000; text-align: center; font-weight: 700; font-size: 16px; padding: 10px; border-radius: 8px; border: none;">
+          <td colspan="3" class="split-section-text" style="background: #fff; color: #000; text-align: center; font-weight: 700; padding: 10px; border-radius: 8px; border: none;">
             ${sectionName}
           </td>`;
       } else {
         tr.innerHTML = `
-          <td colspan="2" style="background: #fff; color: #000; text-align: center; font-weight: 700; font-size: 16px; padding: 10px; border-radius: 8px; border: none;">
+          <td colspan="2" class="split-section-text" style="background: #fff; color: #000; text-align: center; font-weight: 700; padding: 10px; border-radius: 8px; border: none;">
             ${sectionName}
           </td>`;
       }

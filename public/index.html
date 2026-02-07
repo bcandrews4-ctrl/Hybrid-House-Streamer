@@ -54,7 +54,13 @@
         </div>
 
         <label>Font Size (table)<input id="h1-font" type="number" step="0.1" value="1.0"/></label>
-        <label style="margin-top:6px"><input type="checkbox" id="h1-showSets" checked/> Show "Sets" column</label>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="h1-showSets" checked/>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Show "Sets" column</span>
+        </div>
 
         <div class="timer-config">
           <label>Mode
@@ -65,6 +71,20 @@
             </select>
           </label>
           <div id="h1-params" class="params"></div>
+        </div>
+
+        <div class="rounds-counter-config">
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="h1-roundsEnabled"/>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Enable Rounds Counter</span>
+          </div>
+          <div id="h1-roundsParams" class="rounds-params" style="display:none">
+            <label>Round Minutes<input id="h1-roundsTotalTime" type="number" min="0.5" step="0.5" value="15"/></label>
+            <label>Number of Rounds<input id="h1-roundsCount" type="number" min="1" value="3"/></label>
+          </div>
         </div>
 
         <div class="rows" id="h1-rows"></div>
@@ -99,7 +119,13 @@
         </div>
 
         <label>Font Size (table)<input id="h2-font" type="number" step="0.1" value="1.0"/></label>
-        <label style="margin-top:6px"><input type="checkbox" id="h2-showSets" checked/> Show "Sets" column</label>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="h2-showSets" checked/>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Show "Sets" column</span>
+        </div>
 
         <div class="timer-config">
           <label>Mode
@@ -110,6 +136,20 @@
             </select>
           </label>
           <div id="h2-params" class="params"></div>
+        </div>
+
+        <div class="rounds-counter-config">
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="h2-roundsEnabled"/>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Enable Rounds Counter</span>
+          </div>
+          <div id="h2-roundsParams" class="rounds-params" style="display:none">
+            <label>Round Minutes<input id="h2-roundsTotalTime" type="number" min="0.5" step="0.5" value="15"/></label>
+            <label>Number of Rounds<input id="h2-roundsCount" type="number" min="1" value="3"/></label>
+          </div>
         </div>
 
         <div class="rows" id="h2-rows"></div>
@@ -144,7 +184,13 @@
         </div>
 
         <label>Font Size (table)<input id="h3-font" type="number" step="0.1" value="1.0"/></label>
-        <label style="margin-top:6px"><input type="checkbox" id="h3-showSets" checked/> Show "Sets" column</label>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="h3-showSets" checked/>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Show "Sets" column</span>
+        </div>
 
         <div class="timer-config">
           <label>Mode
@@ -155,6 +201,20 @@
             </select>
           </label>
           <div id="h3-params" class="params"></div>
+        </div>
+
+        <div class="rounds-counter-config">
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="h3-roundsEnabled"/>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Enable Rounds Counter</span>
+          </div>
+          <div id="h3-roundsParams" class="rounds-params" style="display:none">
+            <label>Round Minutes<input id="h3-roundsTotalTime" type="number" min="0.5" step="0.5" value="15"/></label>
+            <label>Number of Rounds<input id="h3-roundsCount" type="number" min="1" value="3"/></label>
+          </div>
         </div>
 
         <div class="rows" id="h3-rows"></div>

@@ -121,7 +121,8 @@ function defaultHouse(){
   return {
     workout: { exercises: [], fontSize: 1.0, label: '', showSets: true, title: null },
     timer:   { mode: 'fortime', params: { total: 600, blocks: 1, changeover: 60 } },
-    status:  'stopped'
+    status:  'stopped',
+    roundsCounter: { enabled: false, totalTime: 900, rounds: 3 } // 15 min default, 3 rounds = 5 min each
   };
 }
 function defaultDay(){
@@ -191,16 +192,22 @@ async function loadState(){
       if (hw.workout.label == null) hw.workout.label = '';
       if (hw.workout.showSets == null) hw.workout.showSets = true;
       if (hw.workout.title === undefined) hw.workout.title = null;
-      if (!hw.timer) hw.timer = { mode: 'fortime', params: { total: 600, blocks: 1, changeover: 60 } };
-      if (!hw.timer.params) hw.timer.params = { total:600, blocks:1, changeover:60 };
+      if (!hw.timer) hw.timer = { mode: 'fortime', params: { total: 600, blocks: 1, changeover: 60, countUp: false } };
+      if (!hw.timer.params) hw.timer.params = { total:600, blocks:1, changeover:60, countUp: false };
       if (hw.timer.params.total == null) hw.timer.params.total = 600;
       if (hw.timer.params.blocks == null) hw.timer.params.blocks = 1;
       if (hw.timer.params.changeover == null) hw.timer.params.changeover = 60;
+      if (hw.timer.params.countUp == null) hw.timer.params.countUp = false;
       // rounds defaults
       if (hw.timer.mode === 'rounds'){
         if (hw.timer.params.half == null) hw.timer.params.half = 420; // 7 min default
         if (hw.timer.params.break == null) hw.timer.params.break = 60; // 1 min default
       }
+      // rounds counter defaults
+      if (!hw.roundsCounter) hw.roundsCounter = { enabled: false, totalTime: 900, rounds: 3 };
+      if (hw.roundsCounter.enabled === undefined) hw.roundsCounter.enabled = false;
+      if (hw.roundsCounter.totalTime == null) hw.roundsCounter.totalTime = 900; // 15 min default
+      if (hw.roundsCounter.rounds == null) hw.roundsCounter.rounds = 3;
     }
   }
   if (!DAYS.includes(state.activeDay)) state.activeDay = 'monday';
@@ -251,6 +258,7 @@ function dayState(day){ return state.days[day] || defaultDay(); }
 function computeHouse(day, h, now){
   const dS = dayState(day);
   const t  = dS.houses[h].timer;
+  const roundsCounter = dS.houses[h].roundsCounter;
 
   // Freeze time while paused
   const nowEff = (dS.pauseAt != null) ? dS.pauseAt : now;
@@ -270,24 +278,70 @@ function computeHouse(day, h, now){
   }
   const elapsed = Math.max(0, rawElapsed);
 
+  // Helper function to calculate rounds counter
+  // Uses elapsed time within the current block so the counter resets with each block change
+  function calculateRoundsInfo(blockElapsed, isChangeover = false) {
+    if (!roundsCounter || !roundsCounter.enabled || isChangeover) {
+      return null; // Don't show rounds during changeover
+    }
+    
+    // totalTime represents the duration of 1 round (e.g., 7 minutes) in seconds
+    const timePerRound = Math.max(1, Number(roundsCounter.totalTime || 900));
+    const totalRounds = Math.max(1, Number(roundsCounter.rounds || 3));
+    const maxDuration = timePerRound * totalRounds;
+
+    const clampedElapsed = Math.max(0, Math.min(Number(blockElapsed || 0), maxDuration));
+
+    const currentRound = Math.min(totalRounds, Math.floor(clampedElapsed / timePerRound) + 1);
+    const elapsedInCurrentRound = clampedElapsed % timePerRound;
+    const roundProgress = timePerRound > 0 ? Math.min(1, elapsedInCurrentRound / timePerRound) : 0;
+
+    if (clampedElapsed >= maxDuration) {
+      return {
+        currentRound: totalRounds,
+        totalRounds,
+        timePerRound,
+        roundProgress: 1
+      };
+    }
+
+    return {
+      currentRound,
+      totalRounds,
+      timePerRound,
+      roundProgress
+    };
+  }
+
   if (t.mode === 'fortime'){
     const blocks     = Math.max(1, Number(t.params.blocks ?? 1));
     const changeover = Math.max(0, Number(t.params.changeover ?? 0));
     const perBlock   = Math.max(1, Number(t.params.total ?? 600)); // seconds, minimum 1 to prevent division issues
+    const countUp    = t.params?.countUp === true;
 
     const cycleLen   = perBlock + changeover;
-    if (cycleLen <= 0) return { phase:'idle', remaining:null }; // Safety check
+    if (cycleLen <= 0) return { phase:'idle', remaining:null, roundsInfo: null }; // Safety check
     
     const blockIndex = Math.floor(elapsed / cycleLen);
-    if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks };
+    if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks, roundsInfo: null };
 
     const inCycle = elapsed % cycleLen;
     if (inCycle < perBlock){
+      // Within block: use elapsed time inside this block so counter resets each block
+      const blockElapsed = inCycle;
       const remaining = Math.max(0, perBlock - inCycle);
-      return { phase:'active', remaining, blockIndex, blocks, subphase:'work', perBlock, changeover };
+      const roundsInfo = calculateRoundsInfo(blockElapsed, false);
+      // If countUp is enabled, return elapsed time instead of remaining
+      if (countUp) {
+        return { phase:'active', remaining: blockElapsed, blockIndex, blocks, subphase:'work', perBlock, changeover, roundsInfo, countUp: true };
+      } else {
+        return { phase:'active', remaining, blockIndex, blocks, subphase:'work', perBlock, changeover, roundsInfo };
+      }
     } else {
+      // During changeover: don't show rounds counter (always count down)
       const r = Math.max(0, changeover - (inCycle - perBlock));
-      return { phase:'changeover', remaining:r, blockIndex, blocks, subphase:'rest', perBlock, changeover };
+      const roundsInfo = calculateRoundsInfo(0, true);
+      return { phase:'changeover', remaining:r, blockIndex, blocks, subphase:'rest', perBlock, changeover, roundsInfo };
     }
   }
 
@@ -302,34 +356,41 @@ function computeHouse(day, h, now){
     const blockLen   = rounds * roundLen;
 
     const cycleLen   = blockLen + changeover;
-    if (cycleLen <= 0) return { phase:'idle', remaining:null }; // Safety check
+    if (cycleLen <= 0) return { phase:'idle', remaining:null, roundsInfo: null }; // Safety check
     
     const blockIndex = Math.floor(elapsed / cycleLen);
-    if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks };
+    if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks, roundsInfo: null };
 
     const inCycle = elapsed % cycleLen;
     if (inCycle < blockLen){
+      // Within block: use elapsed time inside this block so counter resets each block
+      const blockElapsed = inCycle;
       const inRound = inCycle % roundLen;
+      const roundsInfo = calculateRoundsInfo(blockElapsed, false);
       if (inRound < on){
-        return { phase:'work', remaining: Math.max(0, on - inRound), blockIndex, blocks, on, off, changeover, roundLen };
+        return { phase:'work', remaining: Math.max(0, on - inRound), blockIndex, blocks, on, off, changeover, roundLen, roundsInfo };
       } else {
-        return { phase:'rest', remaining: Math.max(0, roundLen - inRound), blockIndex, blocks, on, off, changeover, roundLen };
+        return { phase:'rest', remaining: Math.max(0, roundLen - inRound), blockIndex, blocks, on, off, changeover, roundLen, roundsInfo };
       }
     } else {
+      // During changeover: don't show rounds counter
       const r = Math.max(0, changeover - (inCycle - blockLen));
-      return { phase:'changeover', remaining:r, blockIndex, blocks, on, off, changeover, roundLen };
+      const roundsInfo = calculateRoundsInfo(0, true);
+      return { phase:'changeover', remaining:r, blockIndex, blocks, on, off, changeover, roundLen, roundsInfo };
     }
   }
 
   if (t.mode === 'emom'){
     const total = Math.max(60, Number(t.params.total ?? 600)); // Minimum 60 seconds for EMOM
     const remainingTotal = Math.max(0, total - elapsed);
-    if (remainingTotal === 0) return { phase: 'done', remaining: 0 };
+    if (remainingTotal === 0) return { phase: 'done', remaining: 0, roundsInfo: null };
     
     const sec = 60;
     const elapsedInMinute = elapsed % sec;
     const remaining = elapsedInMinute === 0 ? 60 : sec - elapsedInMinute;
-    return { phase: 'active', remaining: Math.max(0, Math.min(remaining, remainingTotal)) };
+    // EMOM is continuous (no changeovers), so use total elapsed time
+    const roundsInfo = calculateRoundsInfo(elapsed, false);
+    return { phase: 'active', remaining: Math.max(0, Math.min(remaining, remainingTotal)), roundsInfo };
   }
 
   if (t.mode === 'rounds'){
@@ -340,29 +401,35 @@ function computeHouse(day, h, now){
     const blockLen   = half + breakSec + half;
 
     const cycleLen   = blockLen + changeover;
-    if (cycleLen <= 0) return { phase:'idle', remaining:null }; // Safety check
+    if (cycleLen <= 0) return { phase:'idle', remaining:null, roundsInfo: null }; // Safety check
     
     const blockIndex = Math.floor(elapsed / cycleLen);
-    if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks };
+    if (blockIndex >= blocks) return { phase:'done', remaining:0, blockIndex: blocks, blocks, roundsInfo: null };
 
     const inCycle = elapsed % cycleLen;
     if (inCycle < blockLen){
+      // Within block: use elapsed time inside this block so counter resets each block
+      const blockElapsed = inCycle;
+      const roundsInfo = calculateRoundsInfo(blockElapsed, false);
+      
       if (inCycle < half){
-        return { phase:'work', subphase:'half1', remaining: Math.max(0, half - inCycle), blockIndex, blocks, half, breakSec, changeover };
+        return { phase:'work', subphase:'half1', remaining: Math.max(0, half - inCycle), blockIndex, blocks, half, breakSec, changeover, roundsInfo };
       }
       if (inCycle < half + breakSec){
         const inBreak = inCycle - half;
-        return { phase:'rest', subphase:'break', remaining: Math.max(0, breakSec - inBreak), blockIndex, blocks, half, breakSec, changeover };
+        return { phase:'rest', subphase:'break', remaining: Math.max(0, breakSec - inBreak), blockIndex, blocks, half, breakSec, changeover, roundsInfo };
       }
       const inHalf2 = inCycle - (half + breakSec);
-      return { phase:'work', subphase:'half2', remaining: Math.max(0, half - inHalf2), blockIndex, blocks, half, breakSec, changeover };
+      return { phase:'work', subphase:'half2', remaining: Math.max(0, half - inHalf2), blockIndex, blocks, half, breakSec, changeover, roundsInfo };
     } else {
+      // During changeover: don't show rounds counter
       const r = Math.max(0, changeover - (inCycle - blockLen));
-      return { phase:'changeover', remaining:r, blockIndex, blocks, half, breakSec, changeover };
+      const roundsInfo = calculateRoundsInfo(0, true);
+      return { phase:'changeover', remaining:r, blockIndex, blocks, half, breakSec, changeover, roundsInfo };
     }
   }
 
-  return { phase:'idle', remaining:null };
+  return { phase:'idle', remaining:null, roundsInfo: null };
 }
 
 function buildRuntime(day){
@@ -372,9 +439,9 @@ function buildRuntime(day){
     activeDay: state.activeDay,
     countdown: dS.countdown,
     houses: {
-      1: { workout: dS.houses[1].workout, timer: dS.houses[1].timer, status: dS.houses[1].status, runtime: computeHouse(day,1,now) },
-      2: { workout: dS.houses[2].workout, timer: dS.houses[2].timer, status: dS.houses[2].status, runtime: computeHouse(day,2,now) },
-      3: { workout: dS.houses[3].workout, timer: dS.houses[3].timer, status: dS.houses[3].status, runtime: computeHouse(day,3,now) },
+      1: { workout: dS.houses[1].workout, timer: dS.houses[1].timer, status: dS.houses[1].status, runtime: computeHouse(day,1,now), roundsCounter: dS.houses[1].roundsCounter },
+      2: { workout: dS.houses[2].workout, timer: dS.houses[2].timer, status: dS.houses[2].status, runtime: computeHouse(day,2,now), roundsCounter: dS.houses[2].roundsCounter },
+      3: { workout: dS.houses[3].workout, timer: dS.houses[3].timer, status: dS.houses[3].status, runtime: computeHouse(day,3,now), roundsCounter: dS.houses[3].roundsCounter },
     }
   };
 }
@@ -418,6 +485,19 @@ io.on('connection', (socket) => {
     dS.houses[house].timer = {
       mode: timer.mode,
       params: Object.assign({ total:600, blocks:1, changeover:0 }, timer.params || {})
+    };
+    saveState();
+    io.emit('state', buildRuntime(state.activeDay));
+  });
+
+  socket.on('updateRoundsCounter', ({ day, house, roundsCounter }) => {
+    if (!DAYS.includes(day)) return;
+    if (![1,2,3].includes(Number(house))) return;
+    const dS = dayState(day);
+    dS.houses[house].roundsCounter = {
+      enabled: Boolean(roundsCounter.enabled),
+      totalTime: Math.max(60, Number(roundsCounter.totalTime || 900)), // minimum 1 minute
+      rounds: Math.max(1, Number(roundsCounter.rounds || 3)) // minimum 1 round
     };
     saveState();
     io.emit('state', buildRuntime(state.activeDay));
@@ -495,8 +575,8 @@ setInterval(() => {
   io.emit('state', buildRuntime(state.activeDay));
 }, 1000);
 
-// Health check endpoint - returns unhealthy if workouts are active
-// This prevents Fly.io from swapping machines during active classes
+// Health check endpoint - always returns healthy
+// App should always be accessible to users
 app.get('/healthz', (req,res)=> {
   const dS = dayState(state.activeDay);
   const now = Date.now();
@@ -521,19 +601,11 @@ app.get('/healthz', (req,res)=> {
   // Check if there are active socket connections
   const activeConnections = io.sockets.sockets.size;
   
-  if (isActive) {
-    // Return 503 (Service Unavailable) to prevent machine swap
-    console.log('⚠️ Health check: Workout active, preventing machine swap');
-    return res.status(503).json({ 
-      status: 'busy', 
-      reason: 'workout_in_progress',
-      connections: activeConnections
-    });
-  }
-  
-  // All clear for deployment
+  // Always return 200 - app is healthy
+  // (Note: Returning 503 was causing app to be unavailable to users)
   res.status(200).json({ 
     status: 'ok',
+    workoutActive: isActive,
     connections: activeConnections 
   });
 });

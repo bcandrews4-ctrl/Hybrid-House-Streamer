@@ -98,6 +98,18 @@ function addRow(h, row={}){
           timer: { mode, params }
         });
         
+        // Save rounds counter data
+        const roundsEnabled = el(`h${h}-roundsEnabled`).checked;
+        const roundsTotalTime = Number(el(`h${h}-roundsTotalTime`).value || 15) * 60; // convert to seconds
+        const roundsCount = Number(el(`h${h}-roundsCount`).value || 3);
+        
+        console.log(`Saving rounds counter for house ${h}:`, { day: activeDay, house: h, roundsCounter: { enabled: roundsEnabled, totalTime: roundsTotalTime, rounds: roundsCount } });
+        socket.emit('updateRoundsCounter', {
+          day: activeDay,
+          house: h,
+          roundsCounter: { enabled: roundsEnabled, totalTime: roundsTotalTime, rounds: roundsCount }
+        });
+        
         // Show success state
         saveBtn.textContent = '✅ Saved';
         setTimeout(() => {
@@ -152,7 +164,7 @@ function addRow(h, row={}){
           border: none;
           color: #000;
           font-weight: 700;
-          font-size: 16px;
+          font-size: 18px;
           text-align: center;
           outline: none;
           text-transform: uppercase;
@@ -283,6 +295,26 @@ function setupLabel(h){
 }
 [1,2,3].forEach(setupLabel);
 
+/* Rounds counter helper */
+function setupRoundsCounter(h){
+  const enabledCheckbox = el(`h${h}-roundsEnabled`);
+  const paramsDiv = el(`h${h}-roundsParams`);
+  const totalTimeInput = el(`h${h}-roundsTotalTime`);
+  const roundsCountInput = el(`h${h}-roundsCount`);
+  
+  function updateVisibility(){
+    paramsDiv.style.display = enabledCheckbox.checked ? '' : 'none';
+    markEditing(h);
+  }
+  
+  enabledCheckbox.addEventListener('change', updateVisibility);
+  if (totalTimeInput) ['input','change','focus','keydown','pointerdown'].forEach(ev => totalTimeInput.addEventListener(ev, ()=>markEditing(h)));
+  if (roundsCountInput) ['input','change','focus','keydown','pointerdown'].forEach(ev => roundsCountInput.addEventListener(ev, ()=>markEditing(h)));
+  
+  updateVisibility();
+}
+[1,2,3].forEach(setupRoundsCounter);
+
 /* Timer params UI */
 function renderParams(h, timer){
   const mode = el(`h${h}-mode`).value;
@@ -293,10 +325,18 @@ function renderParams(h, timer){
   if (mode === 'fortime'){
     const blocks = Number(timer?.params?.blocks ?? 1);
     const changeover = Number(timer?.params?.changeover ?? 60);
+    const countUp = timer?.params?.countUp ?? false;
     wrap.innerHTML = `
       <label>Total (minutes)<input id="h${h}-totalMin" type="number" value="${totalMin}"/></label>
       <label>Blocks (x)<input id="h${h}-blocks" type="number" min="1" value="${blocks}"/></label>
-      <label>Changeover (sec)<input id="h${h}-changeover" type="number" min="0" value="${changeover}"/></label>`;
+      <label>Changeover (sec)<input id="h${h}-changeover" type="number" min="0" value="${changeover}"/></label>
+      <div class="toggle-container">
+        <label class="toggle-switch">
+          <input type="checkbox" id="h${h}-countUp" ${countUp ? 'checked' : ''}/>
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label">Count Up (from 0)</span>
+      </div>`;
   } else if (mode === 'interval'){
     const on = Number(timer?.params?.on ?? 60);
     const off = Number(timer?.params?.off ?? 60);
@@ -313,11 +353,11 @@ function renderParams(h, timer){
     const breakSec = Number(timer?.params?.break ?? 60);
     const blocks = Number(timer?.params?.blocks ?? 1);
     const changeover = Number(timer?.params?.changeover ?? 60);
-    const halfMin = Math.round((half||0)/60);
-    const breakMin = Math.round((breakSec||0)/60);
+    const halfMin = (half||0)/60; // Keep as decimal for 0.5 increments
+    const breakMin = (breakSec||0)/60; // Keep as decimal for 0.5 increments
     wrap.innerHTML = `
-      <label>Half (minutes)<input id="h${h}-halfMin" type="number" value="${halfMin}"/></label>
-      <label>Break (minutes)<input id="h${h}-breakMin" type="number" value="${breakMin}"/></label>
+      <label>Round (minutes)<input id="h${h}-halfMin" type="number" step="0.5" min="0.5" value="${halfMin}"/></label>
+      <label>Break (minutes)<input id="h${h}-breakMin" type="number" step="0.5" min="0" value="${breakMin}"/></label>
       <label>Blocks (x)<input id="h${h}-blocks" type="number" min="1" value="${blocks}"/></label>
       <label>Changeover (sec)<input id="h${h}-changeover" type="number" min="0" value="${changeover}"/></label>`;
   } else {
@@ -365,6 +405,7 @@ function renderParams(h, timer){
       timer.params.total = totalSec;
       timer.params.blocks = Math.max(1, Number(el(`h${h}-blocks`)?.value || 1));
       timer.params.changeover = Math.max(0, Number(el(`h${h}-changeover`)?.value || 60));
+      timer.params.countUp = el(`h${h}-countUp`)?.checked || false;
     } else if (mode === 'interval'){
       timer.params.on  = Number(el(`h${h}-on`).value||60);
       timer.params.off = Number(el(`h${h}-off`).value||60);
@@ -381,6 +422,17 @@ function renderParams(h, timer){
     }
 
     socket.emit('updateTimer', { day: activeDay, house: h, timer });
+
+    // Update rounds counter
+    const roundsEnabled = el(`h${h}-roundsEnabled`).checked;
+    const roundsTotalTime = Number(el(`h${h}-roundsTotalTime`).value || 15) * 60; // convert to seconds
+    const roundsCount = Number(el(`h${h}-roundsCount`).value || 3);
+    
+    socket.emit('updateRoundsCounter', {
+      day: activeDay,
+      house: h,
+      roundsCounter: { enabled: roundsEnabled, totalTime: roundsTotalTime, rounds: roundsCount }
+    });
 
     lastSig[h] = JSON.stringify({ workout: { exercises, fontSize, label, showSets, title }, timer });
     editing[h] = false;
@@ -545,6 +597,17 @@ function rebuild(h, info){
 
   el(`h${h}-mode`).value = info.timer.mode || 'fortime';
   renderParams(h, info.timer);
+  
+  // Update rounds counter fields
+  if (info.roundsCounter) {
+    el(`h${h}-roundsEnabled`).checked = Boolean(info.roundsCounter.enabled);
+    // Convert stored seconds to minutes and round to nearest 0.5 so 90s => 1.5, etc.
+    const minutes = Math.round(((info.roundsCounter.totalTime || 900) / 60) * 2) / 2;
+    el(`h${h}-roundsTotalTime`).value = minutes; // supports 0.5 increments
+    el(`h${h}-roundsCount`).value = info.roundsCounter.rounds || 3;
+    // Trigger visibility update
+    el(`h${h}-roundsParams`).style.display = info.roundsCounter.enabled ? '' : 'none';
+  }
 }
 
 socket.on('state', (st)=>{
