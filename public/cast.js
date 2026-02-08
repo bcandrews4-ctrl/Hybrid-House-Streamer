@@ -61,8 +61,8 @@ updateOrientationButtons(initialOrientation);
 setupOrientationToggle();
 
 function applyScale(scale){
-  // Only scale table text; do NOT touch timer size
-  document.documentElement.style.setProperty('--scale', String(scale || 1));
+  // Only scale table row text; do NOT touch timer size or labels
+  document.documentElement.style.setProperty('--row-scale', String(scale || 1));
 }
 function autoLabelFromMode(mode){
   if (!mode) return '';
@@ -196,25 +196,19 @@ socket.on('state', (st) => {
   }
   fill.style.width = `${pct * 100}%`;
 
-  // Dynamic header: optionally hide Sets column
+  // Hide header labels but keep columns/data
   const showSets = h.workout.showSets !== false; // default true
   if (thead){
-    thead.innerHTML = showSets
-      ? `<tr><th style="text-align:left">EXERCISE</th><th style="text-align:center">SETS</th><th style="text-align:right">REPS</th></tr>`
-      : `<tr><th style="text-align:left">EXERCISE</th><th style="text-align:right">REPS</th></tr>`;
+    thead.innerHTML = '';
   }
 
   // Render table rows
   const tbody = el('tbody');
   tbody.innerHTML = '';
-  (h.workout.exercises || []).forEach((row, index) => {
+  (h.workout.exercises || []).forEach((row) => {
     const tr = document.createElement('tr');
-    
-    // Check if this is a bar split (starts with "--- ")
     const isBarSplit = row.exercise && row.exercise.startsWith('--- ') && row.exercise.endsWith(' ---');
-    
     if (isBarSplit) {
-      // Add spacer row before bar split
       const spacerBefore = document.createElement('tr');
       spacerBefore.style.cssText = 'height: 16px; border: none;';
       if (showSets) {
@@ -223,8 +217,7 @@ socket.on('state', (st) => {
         spacerBefore.innerHTML = '<td colspan="2" style="border: none; padding: 0;"></td>';
       }
       tbody.appendChild(spacerBefore);
-      
-      // Create bar split row
+
       const sectionName = row.exercise.replace(/^--- | ---$/g, '');
       if (showSets) {
         tr.innerHTML = `
@@ -237,13 +230,9 @@ socket.on('state', (st) => {
             ${sectionName}
           </td>`;
       }
-      tr.style.cssText = `
-        background: transparent;
-        border: none !important;
-      `;
+      tr.style.cssText = 'background: transparent; border: none !important;';
       tbody.appendChild(tr);
-      
-      // Add spacer row after bar split
+
       const spacerAfter = document.createElement('tr');
       spacerAfter.style.cssText = 'height: 16px; border: none;';
       if (showSets) {
@@ -253,7 +242,6 @@ socket.on('state', (st) => {
       }
       tbody.appendChild(spacerAfter);
     } else {
-      // Regular exercise row
       if (showSets){
         tr.innerHTML = `
           <td style="text-align:left">${row.exercise || '—'}</td>
