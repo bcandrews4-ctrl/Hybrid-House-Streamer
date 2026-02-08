@@ -271,6 +271,12 @@ h2{ font-size: 20px; }
   position: fixed;
   inset: 0;
   overflow: hidden;
+  background-image:
+    linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)),
+    url('/cast-bg.png');
+  background-size: cover, cover;
+  background-position: center center, center center;
+  background-repeat: no-repeat, no-repeat;
 }
 
 .house-corner{
