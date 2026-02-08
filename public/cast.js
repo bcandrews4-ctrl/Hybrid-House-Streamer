@@ -154,7 +154,7 @@ socket.on('state', (st) => {
       }
     } else if (rt.phase === 'changeover' && changeover > 0){
       const remaining = Number(rt.remaining || 0);
-      pct = clamp01((changeover - remaining) / changeover);
+      pct = clamp01(countUp ? (remaining / changeover) : ((changeover - remaining) / changeover));
     } else {
       pct = 0;
     }
@@ -163,19 +163,21 @@ socket.on('state', (st) => {
     const off = Number(rt.off || t.params.off || 60);
     const changeover = Number(rt.changeover || t.params.changeover || 0);
     const remaining = Number(rt.remaining || 0);
+    const countUp = rt.countUp === true || t.params?.countUp === true;
     if (rt.phase === 'work' && on > 0){
-      pct = clamp01((on - remaining) / on);
+      pct = clamp01(countUp ? (remaining / on) : ((on - remaining) / on));
     } else if (rt.phase === 'rest' && off > 0){
-      pct = clamp01((off - remaining) / off);
+      pct = clamp01(countUp ? (remaining / off) : ((off - remaining) / off));
     } else if (rt.phase === 'changeover' && changeover > 0){
-      pct = clamp01((changeover - remaining) / changeover);
+      pct = clamp01(countUp ? (remaining / changeover) : ((changeover - remaining) / changeover));
     } else {
       pct = 0;
     }
   } else if (t.mode === 'emom'){
     const sec = 60;
     const remaining = Number(rt.remaining || 0);
-    pct = clamp01((sec - remaining) / sec);
+    const countUp = rt.countUp === true || t.params?.countUp === true;
+    pct = clamp01(countUp ? (remaining / sec) : ((sec - remaining) / sec));
   } else if (t.mode === 'rounds'){
     const half = Number(rt.half || t.params.half || 420);
     const breakSec = Number(rt.breakSec || t.params.break || 60);

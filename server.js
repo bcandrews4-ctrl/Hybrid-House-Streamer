@@ -133,10 +133,16 @@ function defaultDay(){
     countdown: { active:false, remaining:0 },
   };
 }
+function defaultWeek(){
+  const days = {};
+  for (const d of DAYS) days[d] = defaultDay();
+  return { days };
+}
 
 let state = {
+  activeWeek: 1,
   activeDay: 'monday',
-  days: {}
+  weeks: {}
 };
 
 // Initialize database table
@@ -156,6 +162,49 @@ async function initDatabase() {
   }
 }
 
+function ensureDefaults(){
+  if (!state || typeof state !== 'object') {
+    state = { activeWeek: 1, activeDay: 'monday', weeks: {} };
+  }
+  if (!state.weeks || typeof state.weeks !== 'object') {
+    state.weeks = {};
+    if (state.days && typeof state.days === 'object') {
+      state.weeks[1] = { days: state.days };
+    }
+  }
+  if (![1,2,3,4].includes(Number(state.activeWeek))) state.activeWeek = 1;
+  for (const w of [1,2,3,4]){
+    if (!state.weeks[w]) state.weeks[w] = defaultWeek();
+    if (!state.weeks[w].days || typeof state.weeks[w].days !== 'object') state.weeks[w].days = {};
+    for (const d of DAYS){
+      if (!state.weeks[w].days[d]) state.weeks[w].days[d] = defaultDay();
+      for (const h of [1,2,3]){
+        const hw = state.weeks[w].days[d].houses[h];
+        if (!hw.workout) hw.workout = { exercises: [], fontSize: 1.0, label: '', showSets: true, title: null };
+        if (hw.workout.fontSize == null) hw.workout.fontSize = 1.0;
+        if (hw.workout.label == null) hw.workout.label = '';
+        if (hw.workout.showSets == null) hw.workout.showSets = true;
+        if (hw.workout.title === undefined) hw.workout.title = null;
+        if (!hw.timer) hw.timer = { mode: 'fortime', params: { total: 600, blocks: 1, changeover: 60, countUp: false } };
+        if (!hw.timer.params) hw.timer.params = { total:600, blocks:1, changeover:60, countUp: false };
+        if (hw.timer.params.total == null) hw.timer.params.total = 600;
+        if (hw.timer.params.blocks == null) hw.timer.params.blocks = 1;
+        if (hw.timer.params.changeover == null) hw.timer.params.changeover = 60;
+        if (hw.timer.params.countUp == null) hw.timer.params.countUp = false;
+        if (hw.timer.mode === 'rounds'){
+          if (hw.timer.params.half == null) hw.timer.params.half = 420;
+          if (hw.timer.params.break == null) hw.timer.params.break = 60;
+        }
+        if (!hw.roundsCounter) hw.roundsCounter = { enabled: false, totalTime: 900, rounds: 3 };
+        if (hw.roundsCounter.enabled === undefined) hw.roundsCounter.enabled = false;
+        if (hw.roundsCounter.totalTime == null) hw.roundsCounter.totalTime = 900;
+        if (hw.roundsCounter.rounds == null) hw.roundsCounter.rounds = 3;
+      }
+    }
+  }
+  if (!DAYS.includes(state.activeDay)) state.activeDay = 'monday';
+}
+
 async function loadState(){
   // Try database first
   if (pgClient) {
@@ -168,7 +217,7 @@ async function loadState(){
         // No data in database yet, try loading from file
         console.log('ℹ️  No data in database, checking file...');
         await loadStateFromFile();
-        if (state.days && Object.keys(state.days).length > 0) {
+        if (state.weeks && Object.keys(state.weeks).length > 0) {
           await saveState(); // Migrate file data to database
           console.log('✅ Migrated file data to database');
         }
@@ -180,37 +229,7 @@ async function loadState(){
   } else {
     await loadStateFromFile();
   }
-  
-  // Ensure defaults (v6-6)
-  for (const d of DAYS){
-    if (!state.days[d]) state.days[d] = defaultDay();
-    // ensure new fields
-    for (const h of [1,2,3]){
-      const hw = state.days[d].houses[h];
-      if (!hw.workout) hw.workout = { exercises: [], fontSize: 1.0, label: '', showSets: true, title: null };
-      if (hw.workout.fontSize == null) hw.workout.fontSize = 1.0;
-      if (hw.workout.label == null) hw.workout.label = '';
-      if (hw.workout.showSets == null) hw.workout.showSets = true;
-      if (hw.workout.title === undefined) hw.workout.title = null;
-      if (!hw.timer) hw.timer = { mode: 'fortime', params: { total: 600, blocks: 1, changeover: 60, countUp: false } };
-      if (!hw.timer.params) hw.timer.params = { total:600, blocks:1, changeover:60, countUp: false };
-      if (hw.timer.params.total == null) hw.timer.params.total = 600;
-      if (hw.timer.params.blocks == null) hw.timer.params.blocks = 1;
-      if (hw.timer.params.changeover == null) hw.timer.params.changeover = 60;
-      if (hw.timer.params.countUp == null) hw.timer.params.countUp = false;
-      // rounds defaults
-      if (hw.timer.mode === 'rounds'){
-        if (hw.timer.params.half == null) hw.timer.params.half = 420; // 7 min default
-        if (hw.timer.params.break == null) hw.timer.params.break = 60; // 1 min default
-      }
-      // rounds counter defaults
-      if (!hw.roundsCounter) hw.roundsCounter = { enabled: false, totalTime: 900, rounds: 3 };
-      if (hw.roundsCounter.enabled === undefined) hw.roundsCounter.enabled = false;
-      if (hw.roundsCounter.totalTime == null) hw.roundsCounter.totalTime = 900; // 15 min default
-      if (hw.roundsCounter.rounds == null) hw.roundsCounter.rounds = 3;
-    }
-  }
-  if (!DAYS.includes(state.activeDay)) state.activeDay = 'monday';
+  ensureDefaults();
 }
 
 async function loadStateFromFile(){
@@ -220,7 +239,7 @@ async function loadStateFromFile(){
     console.log('✅ Loaded state from file');
   }catch(e){
     console.log('ℹ️  No file found, using default state');
-    for (const d of DAYS) state.days[d] = defaultDay();
+    state = { activeWeek: 1, activeDay: 'monday', weeks: {} };
   }
 }
 
@@ -253,10 +272,12 @@ function saveStateToFile(){
     console.error('❌ File save error:', err.message);
   }
 }
-function dayState(day){ return state.days[day] || defaultDay(); }
+function dayState(day, week = state.activeWeek){
+  return state.weeks?.[week]?.days?.[day] || defaultDay();
+}
 
-function computeHouse(day, h, now){
-  const dS = dayState(day);
+function computeHouse(day, h, now, week = state.activeWeek){
+  const dS = dayState(day, week);
   const t  = dS.houses[h].timer;
   const roundsCounter = dS.houses[h].roundsCounter;
 
@@ -329,17 +350,13 @@ function computeHouse(day, h, now){
     if (inCycle < perBlock){
       // Within block: use elapsed time inside this block so counter resets each block
       const blockElapsed = inCycle;
-      const remaining = Math.max(0, perBlock - inCycle);
+      const remaining = countUp ? Math.max(0, blockElapsed) : Math.max(0, perBlock - inCycle);
       const roundsInfo = calculateRoundsInfo(blockElapsed, false);
-      // If countUp is enabled, return elapsed time instead of remaining
-      if (countUp) {
-        return { phase:'active', remaining: blockElapsed, blockIndex, blocks, subphase:'work', perBlock, changeover, roundsInfo, countUp: true };
-      } else {
-        return { phase:'active', remaining, blockIndex, blocks, subphase:'work', perBlock, changeover, roundsInfo };
-      }
+      return { phase:'active', remaining, blockIndex, blocks, subphase:'work', perBlock, changeover, roundsInfo, countUp };
     } else {
-      // During changeover: don't show rounds counter (always count down)
-      const r = Math.max(0, changeover - (inCycle - perBlock));
+      // During changeover: don't show rounds counter
+      const changeElapsed = inCycle - perBlock;
+      const r = countUp ? Math.max(0, changeElapsed) : Math.max(0, changeover - changeElapsed);
       const roundsInfo = calculateRoundsInfo(0, true);
       return { phase:'changeover', remaining:r, blockIndex, blocks, subphase:'rest', perBlock, changeover, roundsInfo };
     }
@@ -351,6 +368,7 @@ function computeHouse(day, h, now){
     const on         = Math.max(1, Number(t.params.on ?? 60));
     const off        = Math.max(0, Number(t.params.off ?? 60));
     const blockTotal = Math.max(1, Number(t.params.total ?? 600)); // seconds per block
+    const countUp    = t.params?.countUp === true;
     const roundLen   = Math.max(1, on + off);
     const rounds     = Math.max(1, Math.floor(blockTotal / roundLen));
     const blockLen   = rounds * roundLen;
@@ -368,13 +386,17 @@ function computeHouse(day, h, now){
       const inRound = inCycle % roundLen;
       const roundsInfo = calculateRoundsInfo(blockElapsed, false);
       if (inRound < on){
-        return { phase:'work', remaining: Math.max(0, on - inRound), blockIndex, blocks, on, off, changeover, roundLen, roundsInfo };
+        const remaining = countUp ? Math.max(0, inRound) : Math.max(0, on - inRound);
+        return { phase:'work', remaining, blockIndex, blocks, on, off, changeover, roundLen, roundsInfo };
       } else {
-        return { phase:'rest', remaining: Math.max(0, roundLen - inRound), blockIndex, blocks, on, off, changeover, roundLen, roundsInfo };
+        const restElapsed = inRound - on;
+        const remaining = countUp ? Math.max(0, restElapsed) : Math.max(0, roundLen - inRound);
+        return { phase:'rest', remaining, blockIndex, blocks, on, off, changeover, roundLen, roundsInfo };
       }
     } else {
       // During changeover: don't show rounds counter
-      const r = Math.max(0, changeover - (inCycle - blockLen));
+      const changeElapsed = inCycle - blockLen;
+      const r = countUp ? Math.max(0, changeElapsed) : Math.max(0, changeover - changeElapsed);
       const roundsInfo = calculateRoundsInfo(0, true);
       return { phase:'changeover', remaining:r, blockIndex, blocks, on, off, changeover, roundLen, roundsInfo };
     }
@@ -383,14 +405,15 @@ function computeHouse(day, h, now){
   if (t.mode === 'emom'){
     const total = Math.max(60, Number(t.params.total ?? 600)); // Minimum 60 seconds for EMOM
     const remainingTotal = Math.max(0, total - elapsed);
+    const countUp = t.params?.countUp === true;
     if (remainingTotal === 0) return { phase: 'done', remaining: 0, roundsInfo: null };
     
     const sec = 60;
     const elapsedInMinute = elapsed % sec;
-    const remaining = elapsedInMinute === 0 ? 60 : sec - elapsedInMinute;
+    const remaining = countUp ? elapsedInMinute : (elapsedInMinute === 0 ? 60 : sec - elapsedInMinute);
     // EMOM is continuous (no changeovers), so use total elapsed time
     const roundsInfo = calculateRoundsInfo(elapsed, false);
-    return { phase: 'active', remaining: Math.max(0, Math.min(remaining, remainingTotal)), roundsInfo };
+    return { phase: 'active', remaining: Math.max(0, Math.min(remaining, remainingTotal)), roundsInfo, countUp };
   }
 
   if (t.mode === 'rounds'){
@@ -434,14 +457,15 @@ function computeHouse(day, h, now){
 
 function buildRuntime(day){
   const now = Date.now();
-  const dS = dayState(day);
+  const dS = dayState(day, state.activeWeek);
   return {
+    activeWeek: state.activeWeek,
     activeDay: state.activeDay,
     countdown: dS.countdown,
     houses: {
-      1: { workout: dS.houses[1].workout, timer: dS.houses[1].timer, status: dS.houses[1].status, runtime: computeHouse(day,1,now), roundsCounter: dS.houses[1].roundsCounter },
-      2: { workout: dS.houses[2].workout, timer: dS.houses[2].timer, status: dS.houses[2].status, runtime: computeHouse(day,2,now), roundsCounter: dS.houses[2].roundsCounter },
-      3: { workout: dS.houses[3].workout, timer: dS.houses[3].timer, status: dS.houses[3].status, runtime: computeHouse(day,3,now), roundsCounter: dS.houses[3].roundsCounter },
+      1: { workout: dS.houses[1].workout, timer: dS.houses[1].timer, status: dS.houses[1].status, runtime: computeHouse(day,1,now,state.activeWeek), roundsCounter: dS.houses[1].roundsCounter },
+      2: { workout: dS.houses[2].workout, timer: dS.houses[2].timer, status: dS.houses[2].status, runtime: computeHouse(day,2,now,state.activeWeek), roundsCounter: dS.houses[2].roundsCounter },
+      3: { workout: dS.houses[3].workout, timer: dS.houses[3].timer, status: dS.houses[3].status, runtime: computeHouse(day,3,now,state.activeWeek), roundsCounter: dS.houses[3].roundsCounter },
     }
   };
 }
@@ -463,10 +487,22 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('updateWorkout', ({ day, house, workout }) => {
+  socket.on('setWeek', (week)=>{
+    const wk = Number(week);
+    if ([1,2,3,4].includes(wk)) {
+      state.activeWeek = wk;
+      saveState();
+      io.emit('state', buildRuntime(state.activeDay));
+    }
+  });
+
+  socket.on('updateWorkout', ({ day, week, house, workout }) => {
     if (!DAYS.includes(day)) return;
     if (![1,2,3].includes(Number(house))) return;
-    const dS = dayState(day);
+    const wk = [1,2,3,4].includes(Number(week)) ? Number(week) : state.activeWeek;
+    ensureDefaults();
+    if (!state.weeks[wk].days[day]) state.weeks[wk].days[day] = defaultDay();
+    const dS = state.weeks[wk].days[day];
     dS.houses[house].workout = {
       exercises: workout.exercises || [],
       fontSize: Number(workout.fontSize || 1.0),
@@ -478,10 +514,13 @@ io.on('connection', (socket) => {
     io.emit('state', buildRuntime(state.activeDay));
   });
 
-  socket.on('updateTimer', ({ day, house, timer }) => {
+  socket.on('updateTimer', ({ day, week, house, timer }) => {
     if (!DAYS.includes(day)) return;
     if (![1,2,3].includes(Number(house))) return;
-    const dS = dayState(day);
+    const wk = [1,2,3,4].includes(Number(week)) ? Number(week) : state.activeWeek;
+    ensureDefaults();
+    if (!state.weeks[wk].days[day]) state.weeks[wk].days[day] = defaultDay();
+    const dS = state.weeks[wk].days[day];
     dS.houses[house].timer = {
       mode: timer.mode,
       params: Object.assign({ total:600, blocks:1, changeover:0 }, timer.params || {})
@@ -490,10 +529,13 @@ io.on('connection', (socket) => {
     io.emit('state', buildRuntime(state.activeDay));
   });
 
-  socket.on('updateRoundsCounter', ({ day, house, roundsCounter }) => {
+  socket.on('updateRoundsCounter', ({ day, week, house, roundsCounter }) => {
     if (!DAYS.includes(day)) return;
     if (![1,2,3].includes(Number(house))) return;
-    const dS = dayState(day);
+    const wk = [1,2,3,4].includes(Number(week)) ? Number(week) : state.activeWeek;
+    ensureDefaults();
+    if (!state.weeks[wk].days[day]) state.weeks[wk].days[day] = defaultDay();
+    const dS = state.weeks[wk].days[day];
     dS.houses[house].roundsCounter = {
       enabled: Boolean(roundsCounter.enabled),
       totalTime: Math.max(60, Number(roundsCounter.totalTime || 900)), // minimum 1 minute
@@ -503,9 +545,12 @@ io.on('connection', (socket) => {
     io.emit('state', buildRuntime(state.activeDay));
   });
 
-  socket.on('play', ({ countdownSeconds=10, day }) => {
+  socket.on('play', ({ countdownSeconds=10, day, week }) => {
     if (!DAYS.includes(day)) return;
-    const dS = dayState(day);
+    const wk = [1,2,3,4].includes(Number(week)) ? Number(week) : state.activeWeek;
+    ensureDefaults();
+    if (!state.weeks[wk].days[day]) state.weeks[wk].days[day] = defaultDay();
+    const dS = state.weeks[wk].days[day];
     dS.countdown = { active: true, remaining: Math.max(0, Number(countdownSeconds||0)) };
     dS.startedAt = null;
     dS.pauseAt = null;
@@ -513,17 +558,23 @@ io.on('connection', (socket) => {
     io.emit('state', buildRuntime(state.activeDay));
   });
 
-  socket.on('pause', ({ day }) => {
+  socket.on('pause', ({ day, week }) => {
     if (!DAYS.includes(day)) return;
-    const dS = dayState(day);
+    const wk = [1,2,3,4].includes(Number(week)) ? Number(week) : state.activeWeek;
+    ensureDefaults();
+    if (!state.weeks[wk].days[day]) state.weeks[wk].days[day] = defaultDay();
+    const dS = state.weeks[wk].days[day];
     if (dS.pauseAt == null) dS.pauseAt = Date.now();
     saveState();
     io.emit('state', buildRuntime(state.activeDay));
   });
 
-  socket.on('resume', ({ day }) => {
+  socket.on('resume', ({ day, week }) => {
     if (!DAYS.includes(day)) return;
-    const dS = dayState(day);
+    const wk = [1,2,3,4].includes(Number(week)) ? Number(week) : state.activeWeek;
+    ensureDefaults();
+    if (!state.weeks[wk].days[day]) state.weeks[wk].days[day] = defaultDay();
+    const dS = state.weeks[wk].days[day];
     if (dS.pauseAt != null){
       const now = Date.now();
       const pauseDur = now - dS.pauseAt;
@@ -537,9 +588,12 @@ io.on('connection', (socket) => {
     io.emit('state', buildRuntime(state.activeDay));
   });
 
-  socket.on('stop', ({ day }) => {
+  socket.on('stop', ({ day, week }) => {
     if (!DAYS.includes(day)) return;
-    const dS = dayState(day);
+    const wk = [1,2,3,4].includes(Number(week)) ? Number(week) : state.activeWeek;
+    ensureDefaults();
+    if (!state.weeks[wk].days[day]) state.weeks[wk].days[day] = defaultDay();
+    const dS = state.weeks[wk].days[day];
     dS.startedAt = null;
     dS.pauseAt = null;
     dS.countdown = { active:false, remaining:0 };
@@ -551,7 +605,7 @@ io.on('connection', (socket) => {
 // Tick: handle countdown & broadcast runtime
 // Only save to database when state actually changes (not every second!)
 const ticker = setInterval(() => {
-  const dS = dayState(state.activeDay);
+  const dS = dayState(state.activeDay, state.activeWeek);
   let needsSave = false;
   
   if (dS.countdown.active){
@@ -575,10 +629,107 @@ const ticker = setInterval(() => {
   io.emit('state', buildRuntime(state.activeDay));
 }, 1000);
 
+// Export API endpoint - export all state as JSON
+app.get('/api/export', (req, res) => {
+  try {
+    res.json(state);
+  } catch (err) {
+    console.error('❌ Export error:', err.message);
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
+// Import API endpoint - import state from JSON
+app.post('/api/import', express.json(), async (req, res) => {
+  try {
+    const imported = req.body;
+
+    if (!imported || typeof imported !== 'object') {
+      return res.status(400).json({ error: 'Invalid data format' });
+    }
+
+    if (imported.activeWeek && [1,2,3,4].includes(Number(imported.activeWeek))) {
+      state.activeWeek = Number(imported.activeWeek);
+    }
+    if (imported.activeDay && DAYS.includes(imported.activeDay)) {
+      state.activeDay = imported.activeDay;
+    }
+
+    ensureDefaults();
+
+    function mergeDay(importedDay, day, wk){
+      if (!state.weeks[wk].days[day]) {
+        state.weeks[wk].days[day] = defaultDay();
+      }
+      if (importedDay.houses) {
+        for (const h of [1, 2, 3]) {
+          if (importedDay.houses[h]) {
+            const importedHouse = importedDay.houses[h];
+            if (importedHouse.workout) {
+              state.weeks[wk].days[day].houses[h].workout = {
+                exercises: importedHouse.workout.exercises || [],
+                fontSize: importedHouse.workout.fontSize ?? 1.0,
+                label: importedHouse.workout.label || '',
+                showSets: importedHouse.workout.showSets !== false,
+                title: importedHouse.workout.title ?? null
+              };
+            }
+            if (importedHouse.timer) {
+              state.weeks[wk].days[day].houses[h].timer = {
+                mode: importedHouse.timer.mode || 'fortime',
+                params: Object.assign(
+                  { total: 600, blocks: 1, changeover: 60 },
+                  importedHouse.timer.params || {}
+                )
+              };
+            }
+            if (importedHouse.roundsCounter) {
+              state.weeks[wk].days[day].houses[h].roundsCounter = {
+                enabled: Boolean(importedHouse.roundsCounter.enabled),
+                totalTime: Number(importedHouse.roundsCounter.totalTime || 900),
+                rounds: Number(importedHouse.roundsCounter.rounds || 3)
+              };
+            }
+            if (importedHouse.status) {
+              state.weeks[wk].days[day].houses[h].status = importedHouse.status;
+            }
+          }
+        }
+      }
+    }
+
+    if (imported.weeks && typeof imported.weeks === 'object') {
+      for (const wk of [1,2,3,4]) {
+        const importedWeek = imported.weeks[wk];
+        if (importedWeek && importedWeek.days) {
+          for (const day of DAYS) {
+            if (importedWeek.days[day]) {
+              mergeDay(importedWeek.days[day], day, wk);
+            }
+          }
+        }
+      }
+    } else if (imported.days && typeof imported.days === 'object') {
+      for (const day of DAYS) {
+        if (imported.days[day]) {
+          mergeDay(imported.days[day], day, 1);
+        }
+      }
+    }
+
+    await saveState();
+    io.emit('state', buildRuntime(state.activeDay));
+    res.json({ success: true, message: 'Data imported successfully' });
+  } catch (err) {
+    console.error('❌ Import error:', err.message);
+    res.status(500).json({ error: 'Import failed: ' + err.message });
+  }
+});
+
 // Health check endpoint - always returns healthy
 // App should always be accessible to users
 app.get('/healthz', (req,res)=> {
-  const dS = dayState(state.activeDay);
+  const dS = dayState(state.activeDay, state.activeWeek);
   const now = Date.now();
   
   // Check if any timers are actively running
@@ -591,7 +742,7 @@ app.get('/healthz', (req,res)=> {
   
   // Check if any house has an active workout
   for (const h of [1,2,3]) {
-    const rt = computeHouse(state.activeDay, h, now);
+    const rt = computeHouse(state.activeDay, h, now, state.activeWeek);
     if (rt.phase !== 'idle' && rt.phase !== 'done') {
       isActive = true;
       break;
@@ -611,7 +762,7 @@ app.get('/healthz', (req,res)=> {
 });
 
 server.listen(PORT, () => {
-  console.log(`Workout caster listening on http://localhost:${PORT}`);
+  console.log(`Hybrid House Streamer listening on http://localhost:${PORT}`);
 });
 
 // Graceful shutdown to persist state and close connections

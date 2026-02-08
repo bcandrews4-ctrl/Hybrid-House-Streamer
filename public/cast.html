@@ -11,35 +11,37 @@
     <button class="btn" id="orientationLandscape">Landscape</button>
     <button class="btn" id="orientationPortrait">Portrait</button>
   </div>
-  <div class="house-corner" id="houseCorner">HOUSE</div>
-  <div class="rounds-counter" id="roundsCounter" style="display:none">
-    <div class="rounds-text">ROUND</div>
-    <div class="rounds-numbers">
-      <span class="rounds-number" id="roundsNumber">1</span>
-      <span class="rounds-separator">/</span>
-      <span class="rounds-total" id="roundsTotal">3</span>
+  <div class="cast-viewport">
+    <div class="house-corner" id="houseCorner">HOUSE</div>
+    <div class="rounds-counter" id="roundsCounter" style="display:none">
+      <div class="rounds-text">ROUND</div>
+      <div class="rounds-numbers">
+        <span class="rounds-number" id="roundsNumber">1</span>
+        <span class="rounds-separator">/</span>
+        <span class="rounds-total" id="roundsTotal">3</span>
+      </div>
     </div>
+
+    <!-- Stacked, centered stage -->
+    <div class="cast-stage">
+      <div class="timer-stack">
+        <div class="timer" id="timer">--:--</div>
+        <div class="progress"><div class="progress__fill" id="progressFill"></div></div>
+        <div class="phase" id="phase" aria-hidden="true"></div>
+      </div>
+
+      <div class="mode-pill" id="modeProgram">MODE</div>
+
+      <div class="program-wrap">
+        <table class="table">
+          <thead></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="overlay"><div id="overlayText">WORKOUT BEGINS IN 10</div></div>
   </div>
-
-  <!-- Stacked, centered stage -->
-  <div class="cast-stage">
-    <div class="timer-stack">
-      <div class="timer" id="timer">--:--</div>
-      <div class="progress"><div class="progress__fill" id="progressFill"></div></div>
-      <div class="phase" id="phase" aria-hidden="true"></div>
-    </div>
-
-    <div class="mode-pill" id="modeProgram">MODE</div>
-
-    <div class="program-wrap">
-      <table class="table">
-        <thead></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="overlay"><div id="overlayText">WORKOUT BEGINS IN 10</div></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/utils.js"></script>

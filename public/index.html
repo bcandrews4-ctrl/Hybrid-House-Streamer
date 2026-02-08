@@ -12,12 +12,22 @@
     <div id="countdown" class="dim"></div>
 
     <div class="controls">
-      <div id="daySel" class="day-sel"></div>
-      <div class="master">
-        <button id="play" class="btn">Play</button>
-        <button id="pause" class="btn">Pause</button>
-        <button id="resume" class="btn">Resume</button>
-        <button id="stop" class="btn">Stop</button>
+      <div class="controls-group">
+        <div class="controls-label">Weeks</div>
+        <div id="weekSel" class="week-sel"></div>
+      </div>
+      <div class="controls-group">
+        <div class="controls-label">Days</div>
+        <div id="daySel" class="day-sel"></div>
+      </div>
+      <div class="controls-group">
+        <div class="controls-label">Controls</div>
+        <div class="master">
+          <button id="play" class="btn">Play</button>
+          <button id="pause" class="btn">Pause</button>
+          <button id="resume" class="btn">Resume</button>
+          <button id="stop" class="btn">Stop</button>
+        </div>
       </div>
       <div class="import-export">
         <button id="exportBtn" class="btn accent">Export Week</button>
@@ -28,11 +38,23 @@
       <div class="links dim">
         Cast tabs: <a href="/cast/1" target="_blank">/cast/1</a> • <a href="/cast/2" target="_blank">/cast/2</a> • <a href="/cast/3" target="_blank">/cast/3</a>
       </div>
+      <div class="cast-orientation-controls">
+        <span class="controls-label">Cast Orientation</span>
+        <div class="orientation-toggle">
+          <span class="orientation-label">Landscape</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="castOrientationToggle"/>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="orientation-label">Portrait</span>
+        </div>
+      </div>
     </div>
 
     <div class="grid">
       <!-- House cards stacked vertically -->
       <div class="card" id="house1">
+        <div class="save-indicator" id="h1-saveStatus" title="Saved status"></div>
         <h2>HOUSE 1</h2>
         <label>House Title (optional)<input id="h1-title" placeholder="HOUSE 1"/></label>
 
@@ -67,10 +89,18 @@
             <select id="h1-mode">
               <option value="fortime">For Time</option>
               <option value="interval">Interval</option>
+              <option value="emom">EMOM</option>
               <option value="rounds">Rounds</option>
             </select>
           </label>
           <div id="h1-params" class="params"></div>
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="h1-countUp"/>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Count up from 0</span>
+          </div>
         </div>
 
         <div class="rounds-counter-config">
@@ -91,13 +121,13 @@
         <div class="row-actions">
           <button class="btn" id="h1-add">Add row</button>
           <button class="btn split-section-btn" id="h1-split">Split Section</button>
-          <button class="btn save-btn" id="h1-save">💾 Save</button>
           <button class="btn" id="h1-open">Open Cast</button>
           <button class="btn accent" id="h1-copy">Copy to Cast</button>
         </div>
       </div>
 
       <div class="card" id="house2">
+        <div class="save-indicator" id="h2-saveStatus" title="Saved status"></div>
         <h2>HOUSE 2</h2>
         <label>House Title (optional)<input id="h2-title" placeholder="HOUSE 2"/></label>
 
@@ -132,10 +162,18 @@
             <select id="h2-mode">
               <option value="fortime">For Time</option>
               <option value="interval">Interval</option>
+              <option value="emom">EMOM</option>
               <option value="rounds">Rounds</option>
             </select>
           </label>
           <div id="h2-params" class="params"></div>
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="h2-countUp"/>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Count up from 0</span>
+          </div>
         </div>
 
         <div class="rounds-counter-config">
@@ -156,13 +194,13 @@
         <div class="row-actions">
           <button class="btn" id="h2-add">Add row</button>
           <button class="btn split-section-btn" id="h2-split">Split Section</button>
-          <button class="btn save-btn" id="h2-save">💾 Save</button>
           <button class="btn" id="h2-open">Open Cast</button>
           <button class="btn accent" id="h2-copy">Copy to Cast</button>
         </div>
       </div>
 
       <div class="card" id="house3">
+        <div class="save-indicator" id="h3-saveStatus" title="Saved status"></div>
         <h2>HOUSE 3</h2>
         <label>House Title (optional)<input id="h3-title" placeholder="HOUSE 3"/></label>
 
@@ -197,10 +235,18 @@
             <select id="h3-mode">
               <option value="fortime">For Time</option>
               <option value="interval">Interval</option>
+              <option value="emom">EMOM</option>
               <option value="rounds">Rounds</option>
             </select>
           </label>
           <div id="h3-params" class="params"></div>
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="h3-countUp"/>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Count up from 0</span>
+          </div>
         </div>
 
         <div class="rounds-counter-config">
@@ -221,7 +267,6 @@
         <div class="row-actions">
           <button class="btn" id="h3-add">Add row</button>
           <button class="btn split-section-btn" id="h3-split">Split Section</button>
-          <button class="btn save-btn" id="h3-save">💾 Save</button>
           <button class="btn" id="h3-open">Open Cast</button>
           <button class="btn accent" id="h3-copy">Copy to Cast</button>
         </div>
