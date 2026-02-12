@@ -199,6 +199,13 @@ function ensureDefaults(){
         if (hw.roundsCounter.enabled === undefined) hw.roundsCounter.enabled = false;
         if (hw.roundsCounter.totalTime == null) hw.roundsCounter.totalTime = 900;
         if (hw.roundsCounter.rounds == null) hw.roundsCounter.rounds = 3;
+        if (hw.roundsCounter.roundDuration == null) hw.roundsCounter.roundDuration = hw.roundsCounter.totalTime;
+        if (hw.roundsCounter.totalDuration == null) hw.roundsCounter.totalDuration = hw.roundsCounter.roundDuration * hw.roundsCounter.rounds;
+        if (hw.roundsCounter.onTime == null) hw.roundsCounter.onTime = hw.roundsCounter.roundDuration;
+        if (hw.roundsCounter.offTime == null) hw.roundsCounter.offTime = 0;
+        if (hw.roundsCounter.onUnit == null) hw.roundsCounter.onUnit = 'min';
+        if (hw.roundsCounter.offUnit == null) hw.roundsCounter.offUnit = 'min';
+        if (hw.roundsCounter.totalUnit == null) hw.roundsCounter.totalUnit = 'min';
       }
     }
   }
@@ -299,6 +306,8 @@ function computeHouse(day, h, now, week = state.activeWeek){
   }
   const elapsed = Math.max(0, rawElapsed);
 
+  const roundsEnabled = Boolean(roundsCounter?.enabled);
+
   // Helper function to calculate rounds counter
   // Uses elapsed time within the current block so the counter resets with each block change
   function calculateRoundsInfo(blockElapsed, isChangeover = false) {
@@ -306,10 +315,10 @@ function computeHouse(day, h, now, week = state.activeWeek){
       return null; // Don't show rounds during changeover
     }
     
-    // totalTime represents the duration of 1 round (e.g., 7 minutes) in seconds
-    const timePerRound = Math.max(1, Number(roundsCounter.totalTime || 900));
+    // roundDuration represents the duration of 1 round (e.g., time on + time off) in seconds
+    const timePerRound = Math.max(1, Number(roundsCounter.roundDuration || roundsCounter.totalTime || 900));
     const totalRounds = Math.max(1, Number(roundsCounter.rounds || 3));
-    const maxDuration = timePerRound * totalRounds;
+    const maxDuration = Math.max(timePerRound * totalRounds, Number(roundsCounter.totalDuration || 0));
 
     const clampedElapsed = Math.max(0, Math.min(Number(blockElapsed || 0), maxDuration));
 
@@ -337,7 +346,9 @@ function computeHouse(day, h, now, week = state.activeWeek){
   if (t.mode === 'fortime'){
     const blocks     = Math.max(1, Number(t.params.blocks ?? 1));
     const changeover = Math.max(0, Number(t.params.changeover ?? 0));
-    const perBlock   = Math.max(1, Number(t.params.total ?? 600)); // seconds, minimum 1 to prevent division issues
+    const perBlock   = roundsEnabled
+      ? Math.max(1, Number(roundsCounter.totalDuration || roundsCounter.totalTime || 600))
+      : Math.max(1, Number(t.params.total ?? 600)); // seconds, minimum 1 to prevent division issues
     const countUp    = t.params?.countUp === true;
 
     const cycleLen   = perBlock + changeover;
@@ -367,7 +378,9 @@ function computeHouse(day, h, now, week = state.activeWeek){
     const changeover = Math.max(0, Number(t.params.changeover ?? 0));
     const on         = Math.max(1, Number(t.params.on ?? 60));
     const off        = Math.max(0, Number(t.params.off ?? 60));
-    const blockTotal = Math.max(1, Number(t.params.total ?? 600)); // seconds per block
+    const blockTotal = roundsEnabled
+      ? Math.max(1, Number(roundsCounter.totalDuration || roundsCounter.totalTime || 600))
+      : Math.max(1, Number(t.params.total ?? 600)); // seconds per block
     const countUp    = t.params?.countUp === true;
     const roundLen   = Math.max(1, on + off);
     const rounds     = Math.max(1, Math.floor(blockTotal / roundLen));
@@ -421,7 +434,9 @@ function computeHouse(day, h, now, week = state.activeWeek){
     const changeover = Math.max(0, Number(t.params.changeover ?? 60));
     const half       = Math.max(1, Number(t.params.half ?? 420));
     const breakSec   = Math.max(0, Number(t.params.break ?? 60));
-    const blockLen   = half + breakSec + half;
+    const blockLen   = roundsEnabled
+      ? Math.max(1, Number(roundsCounter.totalDuration || roundsCounter.totalTime || (half + breakSec + half)))
+      : (half + breakSec + half);
 
     const cycleLen   = blockLen + changeover;
     if (cycleLen <= 0) return { phase:'idle', remaining:null, roundsInfo: null }; // Safety check
@@ -536,10 +551,22 @@ io.on('connection', (socket) => {
     ensureDefaults();
     if (!state.weeks[wk].days[day]) state.weeks[wk].days[day] = defaultDay();
     const dS = state.weeks[wk].days[day];
+    const onTime = Math.max(1, Number(roundsCounter.onTime || 420));
+    const offTime = Math.max(0, Number(roundsCounter.offTime || 0));
+    const totalDuration = Math.max(onTime + offTime, Number(roundsCounter.totalDuration || 900));
+    const roundDuration = Math.max(1, Number(roundsCounter.roundDuration || (onTime + offTime)));
+    const rounds = Math.max(1, Math.floor(totalDuration / roundDuration));
     dS.houses[house].roundsCounter = {
       enabled: Boolean(roundsCounter.enabled),
-      totalTime: Math.max(60, Number(roundsCounter.totalTime || 900)), // minimum 1 minute
-      rounds: Math.max(1, Number(roundsCounter.rounds || 3)) // minimum 1 round
+      onTime,
+      offTime,
+      totalDuration,
+      roundDuration,
+      totalTime: roundDuration,
+      rounds,
+      onUnit: roundsCounter.onUnit === 'sec' ? 'sec' : 'min',
+      offUnit: roundsCounter.offUnit === 'sec' ? 'sec' : 'min',
+      totalUnit: roundsCounter.totalUnit === 'sec' ? 'sec' : 'min'
     };
     saveState();
     io.emit('state', buildRuntime(state.activeDay));

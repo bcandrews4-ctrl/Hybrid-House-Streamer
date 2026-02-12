@@ -57,11 +57,44 @@ function buildWorkoutFromUI(h){
   return { exercises, fontSize, label, showSets, title };
 }
 
+function toSeconds(value, unit){
+  const num = Number(value || 0);
+  return unit === 'sec' ? Math.max(0, Math.round(num)) : Math.max(0, Math.round(num * 60));
+}
+
+function computeRounds(roundDuration, totalDuration){
+  const safeRound = Math.max(1, Number(roundDuration || 0));
+  const safeTotal = Math.max(safeRound, Number(totalDuration || 0));
+  return Math.max(1, Math.floor(safeTotal / safeRound));
+}
+
 function buildRoundsCounterFromUI(h){
   const roundsEnabled = el(`h${h}-roundsEnabled`).checked;
-  const roundsTotalTime = Number(el(`h${h}-roundsTotalTime`).value || 15) * 60; // convert to seconds
-  const roundsCount = Number(el(`h${h}-roundsCount`).value || 3);
-  return { enabled: roundsEnabled, totalTime: roundsTotalTime, rounds: roundsCount };
+  const onVal = el(`h${h}-roundsOnVal`)?.value;
+  const onUnit = el(`h${h}-roundsOnUnit`)?.value === 'sec' ? 'sec' : 'min';
+  const offVal = el(`h${h}-roundsOffVal`)?.value;
+  const offUnit = el(`h${h}-roundsOffUnit`)?.value === 'sec' ? 'sec' : 'min';
+  const totalVal = el(`h${h}-roundsTotalVal`)?.value;
+  const totalUnit = el(`h${h}-roundsTotalUnit`)?.value === 'sec' ? 'sec' : 'min';
+
+  const onTime = Math.max(1, toSeconds(onVal, onUnit));
+  const offTime = Math.max(0, toSeconds(offVal, offUnit));
+  const totalDuration = Math.max(0, toSeconds(totalVal, totalUnit));
+  const roundDuration = Math.max(1, onTime + offTime);
+  const rounds = computeRounds(roundDuration, totalDuration);
+
+  return {
+    enabled: roundsEnabled,
+    onTime,
+    offTime,
+    totalDuration,
+    roundDuration,
+    totalTime: roundDuration, // keep compatibility with existing runtime logic
+    rounds,
+    onUnit,
+    offUnit,
+    totalUnit
+  };
 }
 
 function buildTimerFromUI(h){
@@ -81,16 +114,14 @@ function buildTimerFromUI(h){
     timer.params.blocks = Math.max(1, Number(el(`h${h}-blocks`)?.value || 1));
     timer.params.changeover = Math.max(0, Number(el(`h${h}-changeover`)?.value || 60));
   } else if (mode === 'rounds'){
-    const onUnit = el(`h${h}-onUnit`)?.value === 'sec' ? 'sec' : 'min';
-    const offUnit = el(`h${h}-offUnit`)?.value === 'sec' ? 'sec' : 'min';
-    const halfVal = Number(el(`h${h}-halfVal`)?.value || 7);
-    const breakVal = Number(el(`h${h}-breakVal`)?.value || 0);
+    const onUnit = el(`h${h}-roundsOnUnit`)?.value === 'sec' ? 'sec' : 'min';
+    const offUnit = el(`h${h}-roundsOffUnit`)?.value === 'sec' ? 'sec' : 'min';
+    const halfVal = Number(el(`h${h}-roundsOnVal`)?.value || 7);
+    const breakVal = Number(el(`h${h}-roundsOffVal`)?.value || 0);
     const halfSec = onUnit === 'sec' ? Math.round(halfVal) : Math.round(halfVal * 60);
     const breakSec = offUnit === 'sec' ? Math.round(breakVal) : Math.round(breakVal * 60);
     timer.params.half = Math.max(1, halfSec);
     timer.params.break = Math.max(0, breakSec);
-    timer.params.onUnit = onUnit;
-    timer.params.offUnit = offUnit;
     timer.params.blocks = Math.max(1, Number(el(`h${h}-blocks`)?.value || 1));
     timer.params.changeover = Math.max(0, Number(el(`h${h}-changeover`)?.value || 60));
   } else if (mode === 'emom'){
@@ -293,16 +324,29 @@ function setupLabel(h){
 function setupRoundsCounter(h){
   const enabledCheckbox = el(`h${h}-roundsEnabled`);
   const paramsDiv = el(`h${h}-roundsParams`);
-  const totalTimeInput = el(`h${h}-roundsTotalTime`);
-  const roundsCountInput = el(`h${h}-roundsCount`);
+  const onValInput = el(`h${h}-roundsOnVal`);
+  const onUnitInput = el(`h${h}-roundsOnUnit`);
+  const offValInput = el(`h${h}-roundsOffVal`);
+  const offUnitInput = el(`h${h}-roundsOffUnit`);
+  const totalValInput = el(`h${h}-roundsTotalVal`);
+  const totalUnitInput = el(`h${h}-roundsTotalUnit`);
+  const roundsComputed = el(`h${h}-roundsComputed`);
   function updateVisibility(){
     paramsDiv.style.display = enabledCheckbox.checked ? '' : 'none';
     markEditing(h);
   }
+  function updateComputed(){
+    const data = buildRoundsCounterFromUI(h);
+    if (roundsComputed) roundsComputed.textContent = String(data.rounds || 1);
+  }
   enabledCheckbox.addEventListener('change', updateVisibility);
-  if (totalTimeInput) ['input','change','focus','keydown','pointerdown'].forEach(ev => totalTimeInput.addEventListener(ev, ()=>markEditing(h)));
-  if (roundsCountInput) ['input','change','focus','keydown','pointerdown'].forEach(ev => roundsCountInput.addEventListener(ev, ()=>markEditing(h)));
+  [onValInput, onUnitInput, offValInput, offUnitInput, totalValInput, totalUnitInput].forEach(inp => {
+    if (inp) {
+      ['input','change','focus','keydown','pointerdown'].forEach(ev => inp.addEventListener(ev, ()=>{ markEditing(h); updateComputed(); }));
+    }
+  });
   updateVisibility();
+  updateComputed();
 }
 [1,2,3].forEach(setupRoundsCounter);
 
@@ -332,29 +376,9 @@ function renderParams(h, timer){
       <label>Blocks (x)<input id="h${h}-blocks" type="number" min="1" value="${blocks}"/></label>
       <label>Changeover (sec)<input id="h${h}-changeover" type="number" min="0" value="${changeover}"/></label>`;
   } else if (mode === 'rounds'){
-    const half = Number(timer?.params?.half ?? 420);
-    const breakSec = Number(timer?.params?.break ?? 60);
     const blocks = Number(timer?.params?.blocks ?? 1);
     const changeover = Number(timer?.params?.changeover ?? 60);
-    const onUnit = timer?.params?.onUnit === 'sec' ? 'sec' : 'min';
-    const offUnit = timer?.params?.offUnit === 'sec' ? 'sec' : 'min';
-    const halfVal = onUnit === 'sec' ? Math.round(half||0) : (half||0)/60;
-    const breakVal = offUnit === 'sec' ? Math.round(breakSec||0) : (breakSec||0)/60;
     wrap.innerHTML = `
-      <label>Time On
-        <input id="h${h}-halfVal" type="number" step="0.5" min="0.5" value="${halfVal}"/>
-        <select id="h${h}-onUnit">
-          <option value="min" ${onUnit === 'min' ? 'selected' : ''}>min</option>
-          <option value="sec" ${onUnit === 'sec' ? 'selected' : ''}>sec</option>
-        </select>
-      </label>
-      <label>Time Off
-        <input id="h${h}-breakVal" type="number" step="0.5" min="0" value="${breakVal}"/>
-        <select id="h${h}-offUnit">
-          <option value="min" ${offUnit === 'min' ? 'selected' : ''}>min</option>
-          <option value="sec" ${offUnit === 'sec' ? 'selected' : ''}>sec</option>
-        </select>
-      </label>
       <label>Blocks (x)<input id="h${h}-blocks" type="number" min="1" value="${blocks}"/></label>
       <label>Changeover (sec)<input id="h${h}-changeover" type="number" min="0" value="${changeover}"/></label>`;
   } else if (mode === 'emom'){
@@ -551,10 +575,29 @@ function rebuild(h, info){
   if (countUpToggle) countUpToggle.checked = Boolean(info.timer?.params?.countUp);
 
   if (info.roundsCounter) {
-    el(`h${h}-roundsEnabled`).checked = Boolean(info.roundsCounter.enabled);
-    el(`h${h}-roundsTotalTime`).value = Math.round((info.roundsCounter.totalTime || 900) / 60);
-    el(`h${h}-roundsCount`).value = info.roundsCounter.rounds || 3;
-    el(`h${h}-roundsParams`).style.display = info.roundsCounter.enabled ? '' : 'none';
+    const rc = info.roundsCounter;
+    el(`h${h}-roundsEnabled`).checked = Boolean(rc.enabled);
+    const onUnit = rc.onUnit === 'sec' ? 'sec' : 'min';
+    const offUnit = rc.offUnit === 'sec' ? 'sec' : 'min';
+    const totalUnit = rc.totalUnit === 'sec' ? 'sec' : 'min';
+    const onVal = onUnit === 'sec' ? Math.round(rc.onTime || 420) : Math.round((rc.onTime || 420) / 60);
+    const offVal = offUnit === 'sec' ? Math.round(rc.offTime || 60) : Math.round((rc.offTime || 60) / 60);
+    const totalVal = totalUnit === 'sec' ? Math.round(rc.totalDuration || 900) : Math.round((rc.totalDuration || 900) / 60);
+    const onUnitEl = el(`h${h}-roundsOnUnit`);
+    const offUnitEl = el(`h${h}-roundsOffUnit`);
+    const totalUnitEl = el(`h${h}-roundsTotalUnit`);
+    if (onUnitEl) onUnitEl.value = onUnit;
+    if (offUnitEl) offUnitEl.value = offUnit;
+    if (totalUnitEl) totalUnitEl.value = totalUnit;
+    const onValEl = el(`h${h}-roundsOnVal`);
+    const offValEl = el(`h${h}-roundsOffVal`);
+    const totalValEl = el(`h${h}-roundsTotalVal`);
+    if (onValEl) onValEl.value = onVal;
+    if (offValEl) offValEl.value = offVal;
+    if (totalValEl) totalValEl.value = totalVal;
+    const roundsComputed = el(`h${h}-roundsComputed`);
+    if (roundsComputed) roundsComputed.textContent = String(rc.rounds || 1);
+    el(`h${h}-roundsParams`).style.display = rc.enabled ? '' : 'none';
   }
 }
 

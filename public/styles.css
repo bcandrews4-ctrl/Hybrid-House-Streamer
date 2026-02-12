@@ -221,6 +221,24 @@ h2{ font-size: 20px; }
   user-select: none;
 }
 
+.rounds-params{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.rounds-params label{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rounds-params select{
+  width: 100%;
+}
+.rounds-readout{
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
 /* Enhanced checkbox styling for existing checkboxes */
 .card input[type="checkbox"] {
   width: auto;
