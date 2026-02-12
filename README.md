@@ -87,6 +87,23 @@ The app supports two storage methods:
 - `POST /api/import` - Import data from JSON
 - `GET /healthz` - Health check
 
+### Troubleshooting "Streamer not loading"
+
+If the dashboard loads but nothing changes on the cast pages, check:
+- The server is running and reachable: `GET /healthz` should return `ok`.
+- Socket.IO client served: `GET /socket.io/socket.io.js` returns 200.
+- Your browser can reach the server origin (no mixed-content or adblock). If deploying behind a proxy, ensure websockets are enabled.
+- For data import/export from the dashboard, ensure these routes exist on your server:
+  - `GET /api/export` – returns the full state JSON
+  - `POST /api/import` – accepts a state JSON and persists it
+  - `GET /template.csv` – downloadable CSV template for weekly plans
+
+When running locally, visit `http://localhost:3000` (or your `PORT`). If a port is already in use, either stop the other process or run with a different `PORT`:
+
+```bash
+PORT=55080 npm start
+```
+
 ## Cast Display
 
 Each house has its own cast display:
