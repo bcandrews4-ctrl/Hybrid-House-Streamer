@@ -81,10 +81,16 @@ function buildTimerFromUI(h){
     timer.params.blocks = Math.max(1, Number(el(`h${h}-blocks`)?.value || 1));
     timer.params.changeover = Math.max(0, Number(el(`h${h}-changeover`)?.value || 60));
   } else if (mode === 'rounds'){
-    const halfMin = Number(el(`h${h}-halfMin`)?.value || 7);
-    const breakMin = Number(el(`h${h}-breakMin`)?.value || 1);
-    timer.params.half = Math.max(1, Math.round(halfMin*60));
-    timer.params.break = Math.max(0, Math.round(breakMin*60));
+    const onUnit = el(`h${h}-onUnit`)?.value === 'sec' ? 'sec' : 'min';
+    const offUnit = el(`h${h}-offUnit`)?.value === 'sec' ? 'sec' : 'min';
+    const halfVal = Number(el(`h${h}-halfVal`)?.value || 7);
+    const breakVal = Number(el(`h${h}-breakVal`)?.value || 0);
+    const halfSec = onUnit === 'sec' ? Math.round(halfVal) : Math.round(halfVal * 60);
+    const breakSec = offUnit === 'sec' ? Math.round(breakVal) : Math.round(breakVal * 60);
+    timer.params.half = Math.max(1, halfSec);
+    timer.params.break = Math.max(0, breakSec);
+    timer.params.onUnit = onUnit;
+    timer.params.offUnit = offUnit;
     timer.params.blocks = Math.max(1, Number(el(`h${h}-blocks`)?.value || 1));
     timer.params.changeover = Math.max(0, Number(el(`h${h}-changeover`)?.value || 60));
   } else if (mode === 'emom'){
@@ -330,11 +336,25 @@ function renderParams(h, timer){
     const breakSec = Number(timer?.params?.break ?? 60);
     const blocks = Number(timer?.params?.blocks ?? 1);
     const changeover = Number(timer?.params?.changeover ?? 60);
-    const halfMin = (half||0)/60;
-    const breakMin = (breakSec||0)/60;
+    const onUnit = timer?.params?.onUnit === 'sec' ? 'sec' : 'min';
+    const offUnit = timer?.params?.offUnit === 'sec' ? 'sec' : 'min';
+    const halfVal = onUnit === 'sec' ? Math.round(half||0) : (half||0)/60;
+    const breakVal = offUnit === 'sec' ? Math.round(breakSec||0) : (breakSec||0)/60;
     wrap.innerHTML = `
-      <label>Round (minutes)<input id="h${h}-halfMin" type="number" step="0.5" min="0.5" value="${halfMin}"/></label>
-      <label>Break (minutes)<input id="h${h}-breakMin" type="number" step="0.5" min="0" value="${breakMin}"/></label>
+      <label>Time On
+        <input id="h${h}-halfVal" type="number" step="0.5" min="0.5" value="${halfVal}"/>
+        <select id="h${h}-onUnit">
+          <option value="min" ${onUnit === 'min' ? 'selected' : ''}>min</option>
+          <option value="sec" ${onUnit === 'sec' ? 'selected' : ''}>sec</option>
+        </select>
+      </label>
+      <label>Time Off
+        <input id="h${h}-breakVal" type="number" step="0.5" min="0" value="${breakVal}"/>
+        <select id="h${h}-offUnit">
+          <option value="min" ${offUnit === 'min' ? 'selected' : ''}>min</option>
+          <option value="sec" ${offUnit === 'sec' ? 'selected' : ''}>sec</option>
+        </select>
+      </label>
       <label>Blocks (x)<input id="h${h}-blocks" type="number" min="1" value="${blocks}"/></label>
       <label>Changeover (sec)<input id="h${h}-changeover" type="number" min="0" value="${changeover}"/></label>`;
   } else if (mode === 'emom'){
@@ -344,7 +364,7 @@ function renderParams(h, timer){
     wrap.innerHTML = `<label>Total (minutes)<input id="h${h}-totalMin" type="number" value="${totalMin}"/></label>`;
   }
 
-  wrap.querySelectorAll('input').forEach(inp => {
+  wrap.querySelectorAll('input, select').forEach(inp => {
     ['input','change','focus','keydown','pointerdown'].forEach(ev => inp.addEventListener(ev, ()=>markEditing(h)));
   });
   const countUpToggle = el(`h${h}-countUp`);
