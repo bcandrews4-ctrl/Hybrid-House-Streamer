@@ -365,7 +365,10 @@ function renderParams(h, timer){
   if (copyBtn) {
     copyBtn.addEventListener('click', () => {
       console.log(`Copy to Cast clicked for house ${h}`);
-      sendHouseWorkoutTimer(h);
+      const prevEditing = editing[h];
+      editing[h] = true; // suppress rebuild during quick server echo
+      sendHouseData(h); // include roundsCounter so it doesn't toggle off
+      setTimeout(() => { editing[h] = prevEditing; }, 600);
     });
   } else {
     console.log(`Copy to Cast button not found for house ${h}`);
